@@ -43,16 +43,16 @@ ATopDownShooterCharacter::ATopDownShooterCharacter()
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	// Create a decal in the world to show the cursor's location
-	CursorToWorld = CreateDefaultSubobject<UDecalComponent>("CursorToWorld");
-	CursorToWorld->SetupAttachment(RootComponent);
-	static ConstructorHelpers::FObjectFinder<UMaterial> DecalMaterialAsset(TEXT("Material'/Game/Blueprint/Character/M_Cursor_Decal.M_Cursor_Decal'"));
-	if (DecalMaterialAsset.Succeeded())
-	{
-		CursorToWorld->SetDecalMaterial(DecalMaterialAsset.Object);
-	}
-	CursorToWorld->DecalSize = FVector(16.0f, 32.0f, 32.0f);
-	CursorToWorld->SetRelativeRotation(FRotator(90.0f, 0.0f, 0.0f).Quaternion());
+	//// Create a decal in the world to show the cursor's location
+	//CursorToWorld = CreateDefaultSubobject<UDecalComponent>("CursorToWorld");
+	//CursorToWorld->SetupAttachment(RootComponent);
+	//static ConstructorHelpers::FObjectFinder<UMaterial> DecalMaterialAsset(TEXT("Material'/Game/Blueprint/Character/M_Cursor_Decal.M_Cursor_Decal'"));
+	//if (DecalMaterialAsset.Succeeded())
+	//{
+	//	CursorToWorld->SetDecalMaterial(DecalMaterialAsset.Object);
+	//}
+	//CursorToWorld->DecalSize = FVector(16.0f, 32.0f, 32.0f);
+	//CursorToWorld->SetRelativeRotation(FRotator(90.0f, 0.0f, 0.0f).Quaternion());
 
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
@@ -67,31 +67,58 @@ void ATopDownShooterCharacter::Tick(float DeltaSeconds)
 	StaminaSystem(MovementState);
 	SprintDirectionLimitation(MovementState);
 
-	if (CursorToWorld != nullptr)
+	//if (CursorToWorld != nullptr)
+	//{
+	//	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
+	//	{
+	//		if (UWorld* World = GetWorld())
+	//		{
+	//			FHitResult HitResult;
+	//			FCollisionQueryParams Params(NAME_None, FCollisionQueryParams::GetUnknownStatId());
+	//			FVector StartLocation = TopDownCameraComponent->GetComponentLocation();
+	//			FVector EndLocation = TopDownCameraComponent->GetComponentRotation().Vector() * 2000.0f;
+	//			Params.AddIgnoredActor(this);
+	//			World->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_Visibility, Params);
+	//			FQuat SurfaceRotation = HitResult.ImpactNormal.ToOrientationRotator().Quaternion();
+	//			CursorToWorld->SetWorldLocationAndRotation(HitResult.Location, SurfaceRotation);
+	//		}
+	//	}
+	//	else if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	//	{
+	//		FHitResult TraceHitResult;
+	//		PC->GetHitResultUnderCursor(ECC_Visibility, true, TraceHitResult);
+	//		FVector CursorFV = TraceHitResult.ImpactNormal;
+	//		FRotator CursorR = CursorFV.Rotation();
+	//		CursorToWorld->SetWorldLocation(TraceHitResult.Location);
+	//		CursorToWorld->SetWorldRotation(CursorR);
+	//	}
+	//}
+
+	if (CurrentCursor)
 	{
-		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
-		{
-			if (UWorld* World = GetWorld())
-			{
-				FHitResult HitResult;
-				FCollisionQueryParams Params(NAME_None, FCollisionQueryParams::GetUnknownStatId());
-				FVector StartLocation = TopDownCameraComponent->GetComponentLocation();
-				FVector EndLocation = TopDownCameraComponent->GetComponentRotation().Vector() * 2000.0f;
-				Params.AddIgnoredActor(this);
-				World->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_Visibility, Params);
-				FQuat SurfaceRotation = HitResult.ImpactNormal.ToOrientationRotator().Quaternion();
-				CursorToWorld->SetWorldLocationAndRotation(HitResult.Location, SurfaceRotation);
-			}
-		}
-		else if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		APlayerController* myPC = Cast<APlayerController>(GetController());
+		if (myPC)
 		{
 			FHitResult TraceHitResult;
-			PC->GetHitResultUnderCursor(ECC_Visibility, true, TraceHitResult);
+			myPC->GetHitResultUnderCursor(ECC_Visibility, true, TraceHitResult);
 			FVector CursorFV = TraceHitResult.ImpactNormal;
 			FRotator CursorR = CursorFV.Rotation();
-			CursorToWorld->SetWorldLocation(TraceHitResult.Location);
-			CursorToWorld->SetWorldRotation(CursorR);
+
+			CurrentCursor->SetWorldLocation(TraceHitResult.Location);
+			CurrentCursor->SetWorldRotation(CursorR);
 		}
+	}
+}
+
+void ATopDownShooterCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	InitWeapon();
+
+	if (CursorMaterial)
+	{
+		CurrentCursor = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), CursorMaterial, CursorSize, FVector(0));
 	}
 }
 
@@ -101,6 +128,9 @@ void ATopDownShooterCharacter::SetupPlayerInputComponent(UInputComponent* NewInp
 
 	NewInputComponent->BindAxis(TEXT("MoveForward"), this, &ATopDownShooterCharacter::InputAxisX);
 	NewInputComponent->BindAxis(TEXT("MoveRight"), this, &ATopDownShooterCharacter::InputAxisY);
+
+	NewInputComponent->BindAction(TEXT("FireEvent"), EInputEvent::IE_Pressed, this, &ATopDownShooterCharacter::InputAttackPressed);
+	NewInputComponent->BindAction(TEXT("FireEvent"), EInputEvent::IE_Released, this, &ATopDownShooterCharacter::InputAttackReleased);
 }
 
 void ATopDownShooterCharacter::InputAxisX(float Value)
@@ -113,21 +143,55 @@ void ATopDownShooterCharacter::InputAxisY(float Value)
 	AxisY = Value;
 }
 
+void ATopDownShooterCharacter::InputAttackPressed()
+{
+	AttackCharEvent(true);
+}
+
+void ATopDownShooterCharacter::InputAttackReleased()
+{
+	AttackCharEvent(false);
+}
+
 void ATopDownShooterCharacter::MovementTick(float DeltaTime)
 {
 	AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
 	AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
 
-	APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-
-	if (MyController)
+	if (MovementState == EMovementState::SprintRun_State)
 	{
-		FHitResult ResultHit;
-		MyController->GetHitResultUnderCursorByChannel(ETraceTypeQuery::TraceTypeQuery6, false, ResultHit);
-
-		float FindRotatorResultYaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ResultHit.Location).Yaw;
-		SetActorRotation(FQuat(FRotator(0.0f, FindRotatorResultYaw, 0.0f)));
+		FVector myRotationVector = FVector(AxisX, AxisY, 0.0f);
+		FRotator myRotator = myRotationVector.ToOrientationRotator();
+		SetActorRotation(FQuat(myRotator));
 	}
+
+	else
+	{
+		APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+		if (MyController)
+		{
+			FHitResult ResultHit;
+			MyController->GetHitResultUnderCursor(ECC_GameTraceChannel1, true, ResultHit);
+
+			float FindRotatorResultYaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ResultHit.Location).Yaw;
+			SetActorRotation(FQuat(FRotator(0.0f, FindRotatorResultYaw, 0.0f)));
+		}
+	}
+}
+
+void ATopDownShooterCharacter::AttackCharEvent(bool bIsFiring)
+{
+	AWeaponDefault* myWeapon = nullptr;
+	myWeapon = GetCurrentWeapon();
+	if (myWeapon)
+	{
+		//ToDo Check melee or range
+		myWeapon->SetWeaponStateFire(bIsFiring);
+	}
+	else
+		UE_LOG(LogTemp, Warning, TEXT("ATPSCharacter::AttackCharEvent - CurrentWeapon -NULL"));
+
 }
 
 void ATopDownShooterCharacter::CharacterUpdate()
@@ -182,6 +246,13 @@ void ATopDownShooterCharacter::ChangeMovementState()
 	}
 
 	CharacterUpdate();
+
+	//Weapon state update
+	AWeaponDefault* myWeapon = GetCurrentWeapon();
+	if (myWeapon)
+	{
+		myWeapon->UpdateStateWeapon(MovementState);
+	}
 }
 
 //Function which controls character's stamina and doesn't let him Sprint for a long time
@@ -225,4 +296,38 @@ void ATopDownShooterCharacter::SprintDirectionLimitation(EMovementState State)
 			CharacterUpdate();
 		}
 	}
+}
+
+AWeaponDefault* ATopDownShooterCharacter::GetCurrentWeapon()
+{
+	return CurrentWeapon;
+}
+
+void ATopDownShooterCharacter::InitWeapon()
+{
+	if (InitWeaponClass)
+	{
+		FVector SpawnLocation = FVector(0);
+		FRotator SpawnRotation = FRotator(0);
+
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		SpawnParams.Owner = GetOwner();
+		SpawnParams.Instigator = GetInstigator();
+
+		AWeaponDefault* myWeapon = Cast<AWeaponDefault>(GetWorld()->SpawnActor(InitWeaponClass, &SpawnLocation, &SpawnRotation, SpawnParams));
+		if (myWeapon)
+		{
+			FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
+			myWeapon->AttachToComponent(GetMesh(), Rule, FName("WeaponSocketRightHand"));
+			CurrentWeapon = myWeapon;
+
+			myWeapon->UpdateStateWeapon(MovementState);
+		}
+	}
+}
+
+UDecalComponent* ATopDownShooterCharacter::GetCursorToWorld()
+{
+	return CurrentCursor;
 }

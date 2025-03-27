@@ -36,6 +36,33 @@ struct FCharacterSpeed
 	float SprintRun_State = 800;
 };
 
+USTRUCT(BlueprintType)
+struct FProjectileInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
+	TSubclassOf<class AProjectileDefault> Projectile = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
+	float ProjectileDamage = 20;
+};
+
+USTRUCT(BlueprintType)
+struct FWeaponInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponSetting")
+	float WeaponDamage = 20;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponSetting")
+	float RateOfFire = 0.5;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponSetting")
+	FProjectileInfo ProjectileSetting;
+};
+
 UCLASS()
 class TOPDOWNSHOOTER_API UTypes : public UBlueprintFunctionLibrary
 {
