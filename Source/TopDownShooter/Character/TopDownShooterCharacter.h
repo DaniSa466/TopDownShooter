@@ -42,8 +42,7 @@ private:
 
 public:
 	//variables
-	
-	//movement
+	//Varuables for movement control system
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	EMovementState MovementState = EMovementState::Run_State;
 
@@ -59,14 +58,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	bool SprintRunEnabled = false;
 
-	//Stamina system
+	//Stamina system variables
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	int Stamina = 100;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	int MaxStamina = 100;
 
-	//Forward sprinting
+	//Forward sprinting variables
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	int MaxDeviation = 20;
 
