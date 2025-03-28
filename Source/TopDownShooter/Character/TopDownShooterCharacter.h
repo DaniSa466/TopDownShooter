@@ -5,12 +5,16 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "TopDownShooter/FuncLibrary/Types.h"
+#include "TopDownShooter/Weapon/WeaponDefault.h"
 #include "TopDownShooterCharacter.generated.h"
 
 UCLASS(Blueprintable)
 class ATopDownShooterCharacter : public ACharacter
 {
 	GENERATED_BODY()
+
+protected:
+	virtual void BeginPlay() override;
 
 public:
 	ATopDownShooterCharacter();
@@ -24,8 +28,6 @@ public:
 	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	/** Returns CursorToWorld subobject **/
-	FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
 
 private:
 	/** Top down camera */
@@ -36,13 +38,16 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
 
-	/** A decal that projects to the cursor location. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UDecalComponent* CursorToWorld;
-
 public:
 	//variables
-	//Varuables for movement control system
+	//cursor
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cursor")
+	UMaterialInterface* CursorMaterial = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cursor")
+	FVector CursorSize = FVector(20.0f, 40.0f, 40.0f);
+
+	//movement system
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	EMovementState MovementState = EMovementState::Run_State;
 
@@ -58,7 +63,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	bool SprintRunEnabled = false;
 
-	//Stamina system variables
+	//weapon
+	AWeaponDefault* CurrentWeapon = nullptr;
+
+	//for demo
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Demo")
+	TSubclassOf<AWeaponDefault> InitWeaponClass = nullptr;
+
+	UDecalComponent* CurrentCursor = nullptr;
+
+	//Stamina system
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	int Stamina = 100;
 
@@ -105,4 +119,13 @@ public:
 
 	UFUNCTION()
 	void SprintDirectionLimitation(EMovementState State);
+
+	UFUNCTION(BlueprintCallable)
+	AWeaponDefault* GetCurrentWeapon();
+
+	//UFUNCTION(BlueprintCallable)
+	//void InitWeapon();
+
+	UFUNCTION(BlueprintCallable)
+	UDecalComponent* GetCursorToWorld();
 };
