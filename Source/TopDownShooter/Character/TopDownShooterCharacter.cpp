@@ -78,7 +78,7 @@ void ATopDownShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//InitWeapon();
+	InitWeapon();
 
 	if (CursorMaterial)
 	{
@@ -92,6 +92,9 @@ void ATopDownShooterCharacter::SetupPlayerInputComponent(UInputComponent* NewInp
 
 	NewInputComponent->BindAxis(TEXT("MoveForward"), this, &ATopDownShooterCharacter::InputAxisX);
 	NewInputComponent->BindAxis(TEXT("MoveRight"), this, &ATopDownShooterCharacter::InputAxisY);
+
+	NewInputComponent->BindAction(TEXT("FireEvent"), EInputEvent::IE_Pressed, this, &ATopDownShooterCharacter::InputAttackPressed);
+	NewInputComponent->BindAction(TEXT("FireEvent"), EInputEvent::IE_Released, this, &ATopDownShooterCharacter::InputAttackReleased);
 }
 
 void ATopDownShooterCharacter::InputAxisX(float Value)
@@ -102,6 +105,27 @@ void ATopDownShooterCharacter::InputAxisX(float Value)
 void ATopDownShooterCharacter::InputAxisY(float Value)
 {
 	AxisY = Value;
+}
+
+void ATopDownShooterCharacter::InputAttackPressed()
+{
+	AttackCharEvent(true);
+}
+
+void ATopDownShooterCharacter::InputAttackReleased()
+{
+	AttackCharEvent(false);
+}
+
+void ATopDownShooterCharacter::AttackCharEvent(bool bIsFiring)
+{
+	AWeaponDefault* myWeapon = nullptr;
+	myWeapon = GetCurrentWeapon();
+	if (myWeapon)
+		myWeapon->SetWeaponStateFire(bIsFiring);
+
+	else
+		UE_LOG(LogTemp, Warning, TEXT("ATopDownShooterCharacter::AttackCharEvent - CurrentWeapon - NULL"));
 }
 
 void ATopDownShooterCharacter::MovementTick(float DeltaTime)
@@ -173,7 +197,14 @@ void ATopDownShooterCharacter::ChangeMovementState()
 	}
 
 	CharacterUpdate();
+
+	//Weapon state update
+	AWeaponDefault* myWeapon = GetCurrentWeapon();
+	if (myWeapon)
+		myWeapon->UpdateStateWeapon(MovementState);
 }
+
+
 
 //Function which controls character's stamina and doesn't let him Sprint for a long time
 void ATopDownShooterCharacter::StaminaSystem(EMovementState State)
@@ -220,32 +251,34 @@ void ATopDownShooterCharacter::SprintDirectionLimitation(EMovementState State)
 
 AWeaponDefault* ATopDownShooterCharacter::GetCurrentWeapon()
 {
-	return nullptr;
+	return CurrentWeapon;
 }
 
-//void ATopDownShooterCharacter::InitWeapon()
-//{
-//	if (InitWeaponClass)
-//	{
-//		FVector SpawnLocation = FVector(0);
-//		FRotator SpawnRotation = FRotator(0);
-//
-//		FActorSpawnParameters SpawnParameters;
-//		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-//		SpawnParameters.Owner = GetOwner();
-//		SpawnParameters.Instigator = GetInstigator();
-//
-//		AWeaponDefault* MyWeapon = Cast<AWeaponDefault>(GetWorld()->SpawnActor(InitWeaponClass, &SpawnLocation, &SpawnRotation, SpawnParameters));
-//		if (MyWeapon)
-//		{
-//			FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
-//			MyWeapon->AttachToComponent(GetMesh(), Rule, FName("WeaponSocketRightHand"));
-//			CurrentWeapon = MyWeapon;
-//		}
-//	}
-//}
+void ATopDownShooterCharacter::InitWeapon()
+{
+	if (InitWeaponClass)
+	{
+		FVector SpawnLocation = FVector(0);
+		FRotator SpawnRotation = FRotator(0);
+
+		FActorSpawnParameters SpawnParameters;
+		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		SpawnParameters.Owner = GetOwner();
+		SpawnParameters.Instigator = GetInstigator();
+
+		AWeaponDefault* MyWeapon = Cast<AWeaponDefault>(GetWorld()->SpawnActor(InitWeaponClass, &SpawnLocation, &SpawnRotation, SpawnParameters));
+		if (MyWeapon)
+		{
+			FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
+			MyWeapon->AttachToComponent(GetMesh(), Rule, FName("WeaponSocketRightHand"));
+			CurrentWeapon = MyWeapon;
+
+			MyWeapon->UpdateStateWeapon(MovementState);
+		}
+	}
+}
 
 UDecalComponent* ATopDownShooterCharacter::GetCursorToWorld()
 {
-	return nullptr;
+	return CurrentCursor;
 }

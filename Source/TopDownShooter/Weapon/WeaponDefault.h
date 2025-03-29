@@ -5,16 +5,19 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/ArrowComponent.h"
+
 #include "TopDownShooter/FuncLibrary/Types.h"
 #include "TopDownShooter/Weapon/ProjectileDefault.h"
 #include "WeaponDefault.generated.h"
+
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponFireStart);//ToDo Delegate on event weapon fire - Anim char, state char...
 
 UCLASS()
 class TOPDOWNSHOOTER_API AWeaponDefault : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AWeaponDefault();
 
@@ -30,13 +33,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLogic")
 	FWeaponInfo WeaponSetting;
 
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
+public:
+	// Tick func
 	virtual void Tick(float DeltaTime) override;
 
 	void FireTick(float DeltaTime);

@@ -1,12 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "WeaponDefault.h"
 
 // Sets default values
 AWeaponDefault::AWeaponDefault()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));
@@ -30,8 +28,9 @@ AWeaponDefault::AWeaponDefault()
 void AWeaponDefault::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	WeaponInit();
+
 }
 
 // Called every frame
@@ -45,13 +44,10 @@ void AWeaponDefault::Tick(float DeltaTime)
 void AWeaponDefault::FireTick(float DeltaTime)
 {
 	if (WeaponFiring)
-	{
-		if (FireTime < 0.f)		
+		if (FireTime < 0.f)
 			Fire();
-	
-		else	
+		else
 			FireTime -= DeltaTime;
-	}
 }
 
 void AWeaponDefault::WeaponInit()
@@ -95,11 +91,11 @@ void AWeaponDefault::Fire()
 		FRotator SpawnRotation = ShootLocation->GetComponentRotation();
 		FProjectileInfo ProjectileInfo;
 		ProjectileInfo = GetProjectile();
-	
+
 		if (ProjectileInfo.Projectile)
 		{
 			//Projectile Init ballistic fire
-	
+
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 			SpawnParams.Owner = GetOwner();
@@ -129,4 +125,3 @@ void AWeaponDefault::UpdateStateWeapon(EMovementState NewMovementState)
 void AWeaponDefault::ChangeDispersion()
 {
 }
-

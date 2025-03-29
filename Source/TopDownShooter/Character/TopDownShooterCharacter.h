@@ -104,6 +104,12 @@ public:
 
 	float AxisX = 0.0f, AxisY = 0.0f;
 
+	UFUNCTION()
+	void InputAttackPressed();
+
+	UFUNCTION()
+	void InputAttackReleased();
+
 	//Tick function
 	UFUNCTION()
 	void MovementTick(float DeltaTime);
@@ -114,6 +120,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ChangeMovementState();
 
+	UFUNCTION(BlueprintCallable)
+	void AttackCharEvent(bool bIsFiring);
+
 	UFUNCTION()
 	void StaminaSystem(EMovementState State);
 
@@ -123,8 +132,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	AWeaponDefault* GetCurrentWeapon();
 
-	//UFUNCTION(BlueprintCallable)
-	//void InitWeapon();
+	UFUNCTION(BlueprintCallable)
+	void InitWeapon();
 
 	UFUNCTION(BlueprintCallable)
 	UDecalComponent* GetCursorToWorld();
