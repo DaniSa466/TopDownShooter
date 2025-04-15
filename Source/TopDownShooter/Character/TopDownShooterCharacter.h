@@ -63,15 +63,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	bool SprintRunEnabled = false;
 
-	//weapon
-	AWeaponDefault* CurrentWeapon = nullptr;
-
-	//for demo
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Demo")
-	TSubclassOf<AWeaponDefault> InitWeaponClass = nullptr;
-
-	UDecalComponent* CurrentCursor = nullptr;
-
 	//Stamina system
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	int Stamina = 100;
@@ -82,7 +73,7 @@ public:
 	//Forward sprinting variables
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	int MaxDeviation = 20;
-
+	
 	int deviation;
 
 	double DeviationCos;
@@ -95,7 +86,16 @@ public:
 
 	FVector MovingDirection;
 
-	//functions
+	//weapon
+	AWeaponDefault* CurrentWeapon = nullptr;
+
+	//for demo
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Demo")
+	TSubclassOf<AWeaponDefault> InitWeaponClass = nullptr;
+
+	UDecalComponent* CurrentCursor = nullptr;
+
+	//inputs
 	UFUNCTION()
 	void InputAxisX(float Value);
 
