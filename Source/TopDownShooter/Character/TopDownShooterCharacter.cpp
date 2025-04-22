@@ -131,15 +131,25 @@ void ATopDownShooterCharacter::MovementTick(float DeltaTime)
 	AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
 	AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
 
-	APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-
-	if (MyController)
+	if (MovementState == EMovementState::SprintRun_State)
 	{
-		FHitResult ResultHit;
-		MyController->GetHitResultUnderCursor(ECC_GameTraceChannel1, true, ResultHit);
+		FVector MyRotationVector = FVector(AxisX, AxisY, 0.0f);
+		FRotator MyRotator = MyRotationVector.ToOrientationRotator();
+		SetActorRotation(FQuat(MyRotator));
+	}
 
-		float FindRotatorResultYaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ResultHit.Location).Yaw;
-		SetActorRotation(FQuat(FRotator(0.0f, FindRotatorResultYaw, 0.0f)));
+	else
+	{
+		APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+		if (MyController)
+		{
+			FHitResult ResultHit;
+			MyController->GetHitResultUnderCursor(ECC_GameTraceChannel1, true, ResultHit);
+
+			float FindRotatorResultYaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ResultHit.Location).Yaw;
+			SetActorRotation(FQuat(FRotator(0.0f, FindRotatorResultYaw, 0.0f)));
+		}
 	}
 }
 
