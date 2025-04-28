@@ -30,7 +30,6 @@ void AWeaponDefault::BeginPlay()
 	Super::BeginPlay();
 
 	WeaponInit();
-
 }
 
 // Called every frame
@@ -39,15 +38,34 @@ void AWeaponDefault::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	FireTick(DeltaTime);
+	ReloadTick(DeltaTime);
 }
 
 void AWeaponDefault::FireTick(float DeltaTime)
 {
 	if (WeaponFiring)
 		if (FireTime < 0.f)
-			Fire();
+			if (GetWeaponRound() > 0)
+				if (!WeaponReloading)
+					Fire();
+
+			else
+				if (!WeaponReloading)
+					InitReload();
+
 		else
 			FireTime -= DeltaTime;
+}
+
+void AWeaponDefault::ReloadTick(float DeltaTime)
+{
+	if (WeaponReloading)
+	{
+		if (ReloadTimer < 0)
+			FinishReload();
+		else
+			ReloadTimer -= DeltaTime;
+	}
 }
 
 void AWeaponDefault::WeaponInit()
@@ -84,6 +102,7 @@ FProjectileInfo AWeaponDefault::GetProjectile()
 void AWeaponDefault::Fire()
 {
 	FireTime = WeaponSetting.RateOfFire;
+	WeaponInfo.Round--;
 
 	if (ShootLocation)
 	{
@@ -104,13 +123,12 @@ void AWeaponDefault::Fire()
 			AProjectileDefault* myProjectile = Cast<AProjectileDefault>(GetWorld()->SpawnActor(ProjectileInfo.Projectile, &SpawnLocation, &SpawnRotation, SpawnParams));
 			if (myProjectile)
 			{
-				//ToDo Init Projectile settings by id in table row(or keep in weapon table)
 				myProjectile->InitialLifeSpan = 20.0f;
-				//Projectile->BulletProjectileMovement->InitialSpeed = 2500.0f;
 			}
 		}
 		else
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Projectile hasn't been initialized."));
 			//ToDo Projectile null Init trace fire			
 		}
 	}
@@ -124,4 +142,23 @@ void AWeaponDefault::UpdateStateWeapon(EMovementState NewMovementState)
 
 void AWeaponDefault::ChangeDispersion()
 {
+}
+
+int32 AWeaponDefault::GetWeaponRound()
+{
+	return WeaponInfo.Round;
+}
+
+void AWeaponDefault::InitReload()
+{
+	WeaponReloading = true;
+
+	ReloadTimer = WeaponSetting.ReloadTime;
+}
+
+void AWeaponDefault::FinishReload()
+{
+	WeaponReloading = false;
+
+	WeaponInfo.Round = WeaponSetting.MaxRound;
 }

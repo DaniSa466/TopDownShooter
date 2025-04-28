@@ -11,6 +11,7 @@
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "TopDownShooter/Game/TopDownShooterGameInstance.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
 
@@ -76,7 +77,7 @@ void ATopDownShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	InitWeapon();
+	InitWeapon(InitWeaponName);
 
 	if (CursorMaterial)
 	{
@@ -93,6 +94,7 @@ void ATopDownShooterCharacter::SetupPlayerInputComponent(UInputComponent* NewInp
 
 	NewInputComponent->BindAction(TEXT("FireEvent"), EInputEvent::IE_Pressed, this, &ATopDownShooterCharacter::InputAttackPressed);
 	NewInputComponent->BindAction(TEXT("FireEvent"), EInputEvent::IE_Released, this, &ATopDownShooterCharacter::InputAttackReleased);
+	NewInputComponent->BindAction(TEXT("ReloadEvent"), EInputEvent::IE_Released, this, &ATopDownShooterCharacter::TryReloadWeapon);
 }
 
 void ATopDownShooterCharacter::InputAxisX(float Value)
@@ -113,6 +115,14 @@ void ATopDownShooterCharacter::InputAttackPressed()
 void ATopDownShooterCharacter::InputAttackReleased()
 {
 	AttackCharEvent(false);
+}
+
+void ATopDownShooterCharacter::TryReloadWeapon()
+{
+	UE_LOG(LogTemp, Warning, TEXT("You're trying to reload your weapon."));
+	if (CurrentWeapon)
+		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound)
+			CurrentWeapon->InitReload();
 }
 
 void ATopDownShooterCharacter::AttackCharEvent(bool bIsFiring)
@@ -252,26 +262,40 @@ AWeaponDefault* ATopDownShooterCharacter::GetCurrentWeapon()
 	return CurrentWeapon;
 }
 
-void ATopDownShooterCharacter::InitWeapon()
+void ATopDownShooterCharacter::InitWeapon(FName IdWeapon)
 {
-	if (InitWeaponClass)
+	UTopDownShooterGameInstance* myGI = Cast<UTopDownShooterGameInstance>(GetGameInstance());
+	FWeaponInfo MyWeaponInfo;
+
+	if (myGI)
 	{
-		FVector SpawnLocation = FVector(0);
-		FRotator SpawnRotation = FRotator(0);
-
-		FActorSpawnParameters SpawnParameters;
-		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		SpawnParameters.Owner = GetOwner();
-		SpawnParameters.Instigator = GetInstigator();
-
-		AWeaponDefault* MyWeapon = Cast<AWeaponDefault>(GetWorld()->SpawnActor(InitWeaponClass, &SpawnLocation, &SpawnRotation, SpawnParameters));
-		if (MyWeapon)
+		if (myGI->GetWeaponInfoByName(IdWeapon, MyWeaponInfo))
 		{
-			FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
-			MyWeapon->AttachToComponent(GetMesh(), Rule, FName("WeaponSocketRightHand"));
-			CurrentWeapon = MyWeapon;
+			if (MyWeaponInfo.WeaponClass)
+			{
+				FVector SpawnLocation = FVector(0);
+				FRotator SpawnRotation = FRotator(0);
 
-			MyWeapon->UpdateStateWeapon(MovementState);
+				FActorSpawnParameters SpawnParameters;
+				SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+				SpawnParameters.Owner = GetOwner();
+				SpawnParameters.Instigator = GetInstigator();
+
+				AWeaponDefault* MyWeapon = Cast<AWeaponDefault>(GetWorld()->SpawnActor(MyWeaponInfo.WeaponClass, &SpawnLocation, &SpawnRotation, SpawnParameters));
+				if (MyWeapon)
+				{
+					FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
+					MyWeapon->AttachToComponent(GetMesh(), Rule, FName("WeaponSocketRightHand"));
+					CurrentWeapon = MyWeapon;
+
+					MyWeapon->WeaponSetting = MyWeaponInfo;
+					MyWeapon->UpdateStateWeapon(MovementState);
+				}
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ATopDownShooterCharacter::InitWeapon - Weapon wasn't found in table -NULL"));
 		}
 	}
 }
