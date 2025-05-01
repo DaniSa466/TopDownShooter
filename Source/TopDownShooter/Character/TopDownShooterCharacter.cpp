@@ -155,7 +155,7 @@ void ATopDownShooterCharacter::MovementTick(float DeltaTime)
 
 void ATopDownShooterCharacter::CharacterUpdate()
 {
-	float ResSpeed = 600;
+	float ResSpeed = 600.f;
 
 	switch (MovementState)
 	{

@@ -44,17 +44,23 @@ void AWeaponDefault::Tick(float DeltaTime)
 void AWeaponDefault::FireTick(float DeltaTime)
 {
 	if (WeaponFiring)
-		if (FireTime < 0.f)
+	{
+		if (FireTime <= 0.f)
+		{
 			if (GetWeaponRound() > 0)
+			{
 				if (!WeaponReloading)
 					Fire();
+			}
 
 			else
 				if (!WeaponReloading)
 					InitReload();
+		}
 
 		else
 			FireTime -= DeltaTime;
+	}
 }
 
 void AWeaponDefault::ReloadTick(float DeltaTime)

@@ -22,19 +22,19 @@ struct FCharacterSpeed
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float Aim_Speed = 250;
+	float Aim_Speed = 250.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float Walk_Speed = 400;
+	float Walk_Speed = 400.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float Run_Speed = 600;
+	float Run_Speed = 600.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float AimWalk_State = 125;
+	float AimWalk_State = 125.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float SprintRun_State = 800;
+	float SprintRun_State = 800.f;
 };
 
 USTRUCT(BlueprintType)
@@ -46,17 +46,17 @@ struct FProjectileInfo
 	TSubclassOf<class AProjectileDefault> Projectile = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
-	float ProjectileDamage = 20;
+	float ProjectileDamage = 20.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
-	float ProjectileLifeTime = 20;
+	float ProjectileLifeTime = 20.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
-	float ProjectileInitSpeed = 2000;
+	float ProjectileInitSpeed = 2000.f;
 
 	//bomb
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
 	bool bIsLikeBomb = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
-	float ProjectileMaxRadiusDamage = 200;
+	float ProjectileMaxRadiusDamage = 200.f;
 };
 
 USTRUCT(BlueprintType)
@@ -83,9 +83,9 @@ struct FWeaponInfo : public FTableRowBase
 	TSubclassOf<class AWeaponDefault> WeaponClass = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponSetting")
-		float RateOfFire = 0.5;
+		float RateOfFire = 0.5f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
-	float ReloadTime = 2;
+	float ReloadTime = 2.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	int32 MaxRound = 10;
 
@@ -102,9 +102,9 @@ struct FWeaponInfo : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
 	FProjectileInfo ProjectileSetting;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trace")
-	float WeaponDamage = 20;
+	float WeaponDamage = 20.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trace")
-	float DistanceTrace = 2000;
+	float DistanceTrace = 2000.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HitEffect")
 	UDecalComponent* DecalOnHit = nullptr;

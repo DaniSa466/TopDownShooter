@@ -67,8 +67,10 @@ public:
 	void ChangeDispersion();
 
 	//Timers'flags
-	float FireTime = 0.0;
-	float ReloadTimer = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FireLogic")
+	float FireTime = 0.0f;
+
+	float ReloadTimer = 0.0f;
 
 	UFUNCTION(BlueprintCallable)
 	int32 GetWeaponRound();
