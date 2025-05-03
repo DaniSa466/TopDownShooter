@@ -53,6 +53,7 @@ void ATopDownShooterCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	ChangeMovementState();
 	StaminaSystem(MovementState);
 	SprintDirectionLimitation(MovementState);
 	MovementTick(DeltaSeconds);
@@ -119,7 +120,6 @@ void ATopDownShooterCharacter::InputAttackReleased()
 
 void ATopDownShooterCharacter::TryReloadWeapon()
 {
-	UE_LOG(LogTemp, Warning, TEXT("You're trying to reload your weapon."));
 	if (CurrentWeapon)
 		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound)
 			CurrentWeapon->InitReload();
@@ -140,7 +140,8 @@ void ATopDownShooterCharacter::MovementTick(float DeltaTime)
 {
 	AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
 	AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
-
+	UE_LOG(LogTemp, Warning, TEXT("Movement: AxisX = %f. AxisY = %f. Speed = %f"), AxisX, AxisY, ResSpeed);
+		
 	APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
 	if (MyController)
@@ -150,13 +151,49 @@ void ATopDownShooterCharacter::MovementTick(float DeltaTime)
 
 		float FindRotatorResultYaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ResultHit.Location).Yaw;
 		SetActorRotation(FQuat(FRotator(0.0f, FindRotatorResultYaw, 0.0f)));
+
+		if (CurrentWeapon)
+		{
+			FVector Displacement = FVector(0);
+			switch (MovementState)
+			{
+			case EMovementState::Stand_State:
+				Displacement = FVector(0.f, 0.f, 120.f);
+				break;
+			case EMovementState::AimStand_State:
+				Displacement = FVector(0.f, 0.f, 160.f);
+				break;
+			case EMovementState::Aim_State:
+				Displacement = FVector(0.f, 0.f, 160.f);
+				break;
+			case EMovementState::AimWalk_State:
+				Displacement = FVector(0.f, 0.f, 160.f);
+				break;
+			case EMovementState::Walk_State:
+				Displacement = FVector(0.f, 0.f, 120.f);
+				break;
+			case EMovementState::Run_State:
+				Displacement = FVector(0.f, 0.f, 120.f);
+				break;
+			case EMovementState::SprintRun_State:
+				break;
+			default:
+				break;
+			}
+
+			CurrentWeapon->ShootEndLocation = ResultHit.Location + Displacement;
+		}
 	}
+
+	if (CurrentWeapon)
+		if (FMath::IsNearlyZero(GetVelocity().Size(), 0.5f))
+			CurrentWeapon->ShouldReduceDispersion = true;
+		else
+			CurrentWeapon->ShouldReduceDispersion = false;
 }
 
 void ATopDownShooterCharacter::CharacterUpdate()
 {
-	float ResSpeed = 600.f;
-
 	switch (MovementState)
 	{
 	case EMovementState::Aim_State:
@@ -166,13 +203,13 @@ void ATopDownShooterCharacter::CharacterUpdate()
 		ResSpeed = MovementSpeedInfo.Walk_Speed;
 		break;
 	case EMovementState::AimWalk_State:
-		ResSpeed = MovementSpeedInfo.AimWalk_State;
+		ResSpeed = MovementSpeedInfo.AimWalk_Speed;
 		break;
 	case EMovementState::Run_State:
 		ResSpeed = MovementSpeedInfo.Run_Speed;
 		break;
 	case EMovementState::SprintRun_State:
-		ResSpeed = MovementSpeedInfo.SprintRun_State;
+		ResSpeed = MovementSpeedInfo.SprintRun_Speed;
 		break;
 	default:
 		break;
@@ -183,25 +220,40 @@ void ATopDownShooterCharacter::CharacterUpdate()
 
 void ATopDownShooterCharacter::ChangeMovementState()
 {
-	if (!WalkEnabled && !SprintRunEnabled && !AimEnabled) MovementState = EMovementState::Run_State;
-
-	else
+	if (AxisX != 0 || AxisY != 0)
 	{
-		if (SprintRunEnabled)
-		{
-			WalkEnabled = false;
-			AimEnabled = false;
-			MovementState = EMovementState::SprintRun_State;
-		}
-
-		else if (WalkEnabled && !SprintRunEnabled && AimEnabled) MovementState = EMovementState::AimWalk_State;
+		if (!WalkEnabled && !SprintRunEnabled && !AimEnabled) 
+			MovementState = EMovementState::Run_State;
 
 		else
 		{
-			if (WalkEnabled && !SprintRunEnabled && !AimEnabled) MovementState = EMovementState::Walk_State;
+			if (SprintRunEnabled)
+			{
+				WalkEnabled = false;
+				AimEnabled = false;
+				MovementState = EMovementState::SprintRun_State;
+			}
 
-			else MovementState = EMovementState::Aim_State;
+			else if (WalkEnabled && !SprintRunEnabled && AimEnabled) 
+				MovementState = EMovementState::AimWalk_State;
+
+			else
+			{
+				if (WalkEnabled && !SprintRunEnabled && !AimEnabled) 
+					MovementState = EMovementState::Walk_State;
+
+				else 
+					MovementState = EMovementState::Aim_State;
+			}
 		}
+	}
+
+	else
+	{
+		if (AimEnabled) 
+			MovementState = EMovementState::AimStand_State;
+		else 
+			MovementState = EMovementState::Stand_State;
 	}
 
 	CharacterUpdate();
@@ -289,7 +341,13 @@ void ATopDownShooterCharacter::InitWeapon(FName IdWeapon)
 					CurrentWeapon = MyWeapon;
 
 					MyWeapon->WeaponSetting = MyWeaponInfo;
+					MyWeapon->WeaponInfo.Round = MyWeaponInfo.MaxRound;
+					//Remove !!! Debug
+					MyWeapon->ReloadTime = MyWeaponInfo.ReloadTime;
 					MyWeapon->UpdateStateWeapon(MovementState);
+
+					MyWeapon->OnWeaponReloadStart.AddDynamic(this, &ATopDownShooterCharacter::WeaponReloadStart);
+					MyWeapon->OnWeaponReloadEnd.AddDynamic(this, &ATopDownShooterCharacter::WeaponReloadEnd);
 				}
 			}
 		}
@@ -298,6 +356,26 @@ void ATopDownShooterCharacter::InitWeapon(FName IdWeapon)
 			UE_LOG(LogTemp, Warning, TEXT("ATopDownShooterCharacter::InitWeapon - Weapon wasn't found in table -NULL"));
 		}
 	}
+}
+
+void ATopDownShooterCharacter::WeaponReloadStart()
+{
+
+}
+
+void ATopDownShooterCharacter::WeaponReloadEnd()
+{
+
+}
+
+void ATopDownShooterCharacter::WeaponReloadStart_BP()
+{
+	// In BluePrints
+}
+
+void ATopDownShooterCharacter::WeaponReloadEnd_BP()
+{
+	//In BluePrints
 }
 
 UDecalComponent* ATopDownShooterCharacter::GetCursorToWorld()

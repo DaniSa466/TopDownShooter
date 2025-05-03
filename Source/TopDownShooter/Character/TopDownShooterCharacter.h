@@ -49,7 +49,7 @@ public:
 
 	//movement system
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	EMovementState MovementState = EMovementState::Run_State;
+	EMovementState MovementState = EMovementState::Stand_State;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	FCharacterSpeed MovementSpeedInfo;
@@ -73,6 +73,8 @@ public:
 	//Forward sprinting variables
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	int MaxDeviation = 20;
+
+	float ResSpeed = 600.f;
 	
 	int deviation;
 
@@ -137,6 +139,18 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void InitWeapon(FName IdWeapon);
+
+	UFUNCTION()
+	void WeaponReloadStart();
+	
+	UFUNCTION()
+	void WeaponReloadEnd();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void WeaponReloadStart_BP();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void WeaponReloadEnd_BP();
 
 	UFUNCTION(BlueprintCallable)
 	UDecalComponent* GetCursorToWorld();

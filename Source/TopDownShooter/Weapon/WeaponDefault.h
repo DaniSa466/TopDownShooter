@@ -11,6 +11,8 @@
 #include "WeaponDefault.generated.h"
 
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponFireStart);//ToDo Delegate on event weapon fire - Anim char, state char...
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponReloadStart);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponReloadEnd);
 
 UCLASS()
 class TOPDOWNSHOOTER_API AWeaponDefault : public AActor
@@ -20,6 +22,9 @@ class TOPDOWNSHOOTER_API AWeaponDefault : public AActor
 public:
 	// Sets default values for this actor's properties
 	AWeaponDefault();
+		
+	FOnWeaponReloadStart OnWeaponReloadStart;
+	FOnWeaponReloadEnd OnWeaponReloadEnd;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = Components)
 	class USceneComponent* SceneComponent = nullptr;
@@ -47,11 +52,13 @@ public:
 
 	void ReloadTick(float DeltaTime);
 
+	void DispersionTick(float DeltaTime);
+
 	void WeaponInit();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLogic")
 	bool WeaponFiring = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLogic")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReloadLogic")
 	bool WeaponReloading = false;
 
 	UFUNCTION(BlueprintCallable)
@@ -64,17 +71,42 @@ public:
 	void Fire();
 
 	void UpdateStateWeapon(EMovementState NewMovementState);
-	void ChangeDispersion();
+	void ChangeDispersionByShoot();
+	float GetCurrentDispersion() const;
+	FVector ApplyDispersionToShoot(FVector DirectionShoot) const;
+
+	FVector GetFireEndLocation() const;
+	int8 GetNumberProjectileByShoot() const;
 
 	//Timers'flags
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FireLogic")
 	float FireTime = 0.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReloadLogic")
 	float ReloadTimer = 0.0f;
+	//Remove !!! Debug
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReloadLogic Debug")
+	float ReloadTime = 0.0f;	
 
 	UFUNCTION(BlueprintCallable)
 	int32 GetWeaponRound();
 
 	void InitReload();
 	void FinishReload();
+
+	bool BlockFire = false;
+
+	//Dispersion
+	bool ShouldReduceDispersion = false;
+	float CurrentDispersion = 0.f;
+	float CurrentDispersionMax = 1.f;
+	float CurrentDispersionMin = 0.1f;
+	float CurrentDispersionRecoil = 0.1f;
+	float CurrentDispersionReduction = 0.1f;
+
+	FVector ShootEndLocation = FVector(0);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+	bool ShowDebug = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+	float SizeVectorToChangeShootDirectionLogic = 100.f;
 };
