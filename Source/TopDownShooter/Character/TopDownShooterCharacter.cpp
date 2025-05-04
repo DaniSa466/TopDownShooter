@@ -358,22 +358,22 @@ void ATopDownShooterCharacter::InitWeapon(FName IdWeapon)
 	}
 }
 
-void ATopDownShooterCharacter::WeaponReloadStart()
+void ATopDownShooterCharacter::WeaponReloadStart(UAnimMontage* Anim)
 {
-
+	WeaponReloadStart_BP(Anim);
 }
 
 void ATopDownShooterCharacter::WeaponReloadEnd()
 {
-
+	WeaponReloadEnd_BP();
 }
 
-void ATopDownShooterCharacter::WeaponReloadStart_BP()
+void ATopDownShooterCharacter::WeaponReloadStart_BP_Implementation(UAnimMontage* Anim)
 {
 	// In BluePrints
 }
 
-void ATopDownShooterCharacter::WeaponReloadEnd_BP()
+void ATopDownShooterCharacter::WeaponReloadEnd_BP_Implementation()
 {
 	//In BluePrints
 }

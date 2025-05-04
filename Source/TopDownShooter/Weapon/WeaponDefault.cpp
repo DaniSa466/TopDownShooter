@@ -327,7 +327,8 @@ void AWeaponDefault::InitReload()
 
 	ReloadTimer = WeaponSetting.ReloadTime;
 
-	OnWeaponReloadStart.Broadcast();
+	if(WeaponSetting.AnimCharReload)
+		OnWeaponReloadStart.Broadcast(WeaponSetting.AnimCharReload);
 }
 
 void AWeaponDefault::FinishReload()
