@@ -39,13 +39,17 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	void BulletCollisionSphereHit(
+	void InitProjectile(FProjectileInfo InitParam);
+
+	UFUNCTION()
+	virtual void BulletCollisionSphereHit(
 		class UPrimitiveComponent* HitComp, 
 		AActor* OtherActor, 
 		UPrimitiveComponent* OtherComp, 
 		FVector NormalImpulse, 
 		const FHitResult& Hit);
 
+	UFUNCTION()
 	void BulletCollisionSphereBeginOverlap(
 		UPrimitiveComponent* OverlappedComponent, 
 		AActor* OtherActor, 
@@ -54,9 +58,13 @@ public:
 		bool bFromSweep, 
 		const FHitResult& SweepResult);
 
+	UFUNCTION()
 	void BulletCollisionSphereEndOverlap(
 		UPrimitiveComponent* OverlappedComponent, 
 		AActor* OtherActor, 
 		UPrimitiveComponent* OtherComp, 
 		int32 OtherBodyIndex);
+
+	UFUNCTION()
+	virtual void ImpactProjectile();
 };

@@ -166,7 +166,7 @@ void AWeaponDefault::Fire()
 				FVector Dir = EndLocation - SpawnLocation;
 				Dir.Normalize();
 
-				FMatrix myMatrix(Dir, FVector(0, 1, 0), FVector(0, 0, 1), FVector::ZeroVector);
+				FMatrix myMatrix(Dir, FVector(0, 0, 0), FVector(0, 0, 0), FVector::ZeroVector);
 				SpawnRotation = myMatrix.Rotator();
 
 				if (ProjectileInfo.Projectile)
@@ -182,6 +182,7 @@ void AWeaponDefault::Fire()
 					if (myProjectile)
 					{
 						myProjectile->InitialLifeSpan = 20.0f;
+						myProjectile->InitProjectile(WeaponSetting.ProjectileSetting);
 					}
 				}
 				else
@@ -295,15 +296,15 @@ FVector AWeaponDefault::GetFireEndLocation() const
 	if (ShowDebug)
 	{
 		//direction weapon look
-		/*DrawDebugLine(GetWorld(), ShootLocation->GetComponentLocation(),
+		DrawDebugLine(GetWorld(), ShootLocation->GetComponentLocation(),
 			ShootLocation->GetComponentLocation() + ShootLocation->GetForwardVector() * 500.f, FColor::Cyan,
-			false, 5.f, (uint8)'\000', 0.5f);*/
+			false, 5.f, (uint8)'\000', 0.5f);
 		//direction projectile must fly
-		/*DrawDebugLine(GetWorld(),ShootLocation->GetComponentLocation(), ShootEndLocation, 
-			FColor::Red, false, 5.f, (uint8)'\000', 0.5f);*/
+		DrawDebugLine(GetWorld(),ShootLocation->GetComponentLocation(), ShootEndLocation, 
+			FColor::Red, false, 5.f, (uint8)'\000', 0.5f);
 		//diretcion projectile current fly
-		/*DrawDebugLine(GetWorld(), ShootLocation->GetComponentLocation(), EndLocation, 
-			FColor::Black, false, 5.f, (uint8)'\000', 0.5f);*/
+		DrawDebugLine(GetWorld(), ShootLocation->GetComponentLocation(), EndLocation, 
+			FColor::Black, false, 5.f, (uint8)'\000', 0.5f);
 
 		//DrawDebugSphere(GetWorld(), ShootLocation->GetComponentLocation() + ShootLocation->GetForwardVector()*SizeVectorToChangeShootDirectionLogic, 10.f, 8, FColor::Red, false, 4.0f);
 	}

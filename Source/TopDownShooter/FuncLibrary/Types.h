@@ -54,11 +54,27 @@ struct FProjectileInfo
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
 	float ProjectileInitSpeed = 2000.f;
 
-	//bomb
+	//material to decal on hit
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
-	bool bIsLikeBomb = false;
+	TMap<TEnumAsByte<EPhysicalSurface>, UMaterialInterface*> HitDecals;
+	//Sound when hit
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
+	USoundBase* HitSound = nullptr;
+	//fx when hit check by surface
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
+	TMap<TEnumAsByte<EPhysicalSurface>, UParticleSystem*> HitFXs;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
+	UParticleSystem* ExplosionFX = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
+	USoundBase* ExplosionSound = nullptr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
 	float ProjectileMaxRadiusDamage = 200.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
+	float ExplosionMaxDamage = 40.f;
 };
 
 USTRUCT(BlueprintType)

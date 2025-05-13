@@ -1,4 +1,6 @@
 #include "ProjectileDefault.h"
+#include "Kismet/GameplayStatics.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
 
 // Sets default values
 AProjectileDefault::AProjectileDefault()
@@ -44,6 +46,9 @@ void AProjectileDefault::BeginPlay()
 {
 	Super::BeginPlay();
 
+	BulletCollisionSphere->OnComponentHit.AddDynamic(this, &AProjectileDefault::BulletCollisionSphereHit);
+	BulletCollisionSphere->OnComponentBeginOverlap.AddDynamic(this, &AProjectileDefault::BulletCollisionSphereBeginOverlap);
+	BulletCollisionSphere->OnComponentEndOverlap.AddDynamic(this, &AProjectileDefault::BulletCollisionSphereEndOverlap);
 }
 
 // Called every frame
@@ -52,8 +57,43 @@ void AProjectileDefault::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+void AProjectileDefault::InitProjectile(FProjectileInfo InitParam)
+{
+	BulletProjectileMovement->InitialSpeed = InitParam.ProjectileInitSpeed;
+	BulletProjectileMovement->MaxSpeed = InitParam.ProjectileInitSpeed;
+	this->SetLifeSpan(InitParam.ProjectileLifeTime);
+
+	ProjectileSetting = InitParam;
+}
+
 void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	if (OtherActor && Hit.PhysMaterial.IsValid())
+	{
+		EPhysicalSurface MySurfaceType = UGameplayStatics::GetSurfaceType(Hit);
+
+		if (ProjectileSetting.HitDecals.Contains(MySurfaceType))
+		{
+			UMaterialInterface* MyMaterial = ProjectileSetting.HitDecals[MySurfaceType];
+
+			if (MyMaterial && OtherComp)
+				UGameplayStatics::SpawnDecalAttached(MyMaterial, FVector(20.f), OtherComp, NAME_None, Hit.ImpactPoint, Hit.ImpactNormal.Rotation(), EAttachLocation::KeepWorldPosition, 10.f);
+		}
+
+		if (ProjectileSetting.HitFXs.Contains(MySurfaceType))
+		{
+			UParticleSystem* MyParticle = ProjectileSetting.HitFXs[MySurfaceType];
+
+			if (MyParticle)
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), MyParticle, FTransform(Hit.ImpactNormal.Rotation(), Hit.ImpactPoint, FVector(1.f)));
+		}
+
+		if (ProjectileSetting.HitSound)
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(), ProjectileSetting.HitSound, Hit.ImpactPoint);
+	}
+
+	UGameplayStatics::ApplyDamage(OtherActor, ProjectileSetting.ProjectileDamage, GetInstigatorController(), this, NULL);
+	ImpactProjectile();
 }
 
 void AProjectileDefault::BulletCollisionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -62,4 +102,9 @@ void AProjectileDefault::BulletCollisionSphereBeginOverlap(UPrimitiveComponent* 
 
 void AProjectileDefault::BulletCollisionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+}
+
+void AProjectileDefault::ImpactProjectile()
+{
+	this->Destroy();
 }
