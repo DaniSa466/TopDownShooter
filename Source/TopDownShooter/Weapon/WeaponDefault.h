@@ -11,6 +11,7 @@
 #include "WeaponDefault.generated.h"
 
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponFireStart);//ToDo Delegate on event weapon fire - Anim char, state char...
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponFire, UAnimMontage*, Anim);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponReloadStart, UAnimMontage*, Anim);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponReloadEnd);
 
@@ -23,6 +24,7 @@ public:
 	// Sets default values for this actor's properties
 	AWeaponDefault();
 		
+	FOnWeaponFire OnWeaponFire;
 	FOnWeaponReloadStart OnWeaponReloadStart;
 	FOnWeaponReloadEnd OnWeaponReloadEnd;
 
@@ -54,12 +56,17 @@ public:
 
 	void DispersionTick(float DeltaTime);
 
+	void ClipDropTick(float DeltaTime);
+
+	void ShellDropTick(float DeltaTime);
+
 	void WeaponInit();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLogic")
 	bool WeaponFiring = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReloadLogic")
 	bool WeaponReloading = false;
+	bool WeaponAiming = false;
 
 	UFUNCTION(BlueprintCallable)
 	void SetWeaponStateFire(bool bIsFire);
@@ -83,9 +90,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReloadLogic")
 	float ReloadTimer = 0.0f;
-	//Remove !!! Debug
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReloadLogic Debug")
-	float ReloadTime = 0.0f;	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReloadLogic Debug")	//Remove !!! Debug
+	float ReloadTime = 0.0f;
 
 	UFUNCTION(BlueprintCallable)
 	int32 GetWeaponRound();
@@ -104,6 +110,16 @@ public:
 	float CurrentDispersionReduction = 0.1f;
 
 	FVector ShootEndLocation = FVector(0);
+
+	//Drop Meshes
+	bool DropClipFlag = false;
+	float DropClipTimer = -1.f;
+	bool DropShellFlag = false;
+	float DropShellTimer = -1.f;
+
+	UFUNCTION()
+	void InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection,
+		float LifeTimeMesh, float ImpulseRandomDispersion, float PowerImpuls, float CustomMass);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 	bool ShowDebug = false;

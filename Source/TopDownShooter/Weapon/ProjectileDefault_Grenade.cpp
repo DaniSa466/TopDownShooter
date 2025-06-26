@@ -3,6 +3,13 @@
 
 #include "ProjectileDefault_Grenade.h"
 #include "Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
+
+int32 DebugExplosionShow = 0;
+FAutoConsoleVariableRef CVARExplodeShow(
+	TEXT("TPS.DebugExplode"), DebugExplosionShow,
+	TEXT("Draw Debug For Explode"), ECVF_Cheat
+);
 
 void AProjectileDefault_Grenade::BeginPlay()
 {
@@ -38,15 +45,27 @@ void AProjectileDefault_Grenade::ImpactProjectile()
 
 void AProjectileDefault_Grenade::Explose()
 {
+	if (DebugExplosionShow)
+	{
+		DrawDebugSphere(GetWorld(), GetActorLocation(),
+			ProjectileSetting.ProjectileMinRadiusDamage, 12,
+			FColor::Green, false, 12.f);
+		DrawDebugSphere(GetWorld(), GetActorLocation(),
+			ProjectileSetting.ProjectileMaxRadiusDamage, 12,
+			FColor::Red, false, 12.f);
+	}
+
 	TimerEnabled = false;
 	if (ProjectileSetting.ExplosionFX)
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ProjectileSetting.ExplosionFX, GetActorLocation(), GetActorRotation(), FVector(1.f));
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ProjectileSetting.ExplosionFX, 
+			GetActorLocation(), GetActorRotation(), FVector(1.f));
 	if (ProjectileSetting.ExplosionSound)
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ProjectileSetting.ExplosionSound, GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ProjectileSetting.ExplosionSound, 
+			GetActorLocation());
 
 	TArray<AActor*> IgnoreActor;
 	UGameplayStatics::ApplyRadialDamageWithFalloff(GetWorld(),
-		ProjectileSetting.ExplosionMaxDamage, ProjectileSetting.ExplosionMaxDamage * 0.2f,
+		ProjectileSetting.ExplodeMaxDamage, ProjectileSetting.ExplodeMaxDamage * 0.2f,
 		GetActorLocation(), 1000.f, 2000.f, 5,
 		NULL, IgnoreActor, nullptr, nullptr);
 

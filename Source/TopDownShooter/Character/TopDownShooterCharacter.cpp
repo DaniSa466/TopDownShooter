@@ -222,27 +222,32 @@ void ATopDownShooterCharacter::ChangeMovementState()
 {
 	if (AxisX != 0 || AxisY != 0)
 	{
-		if (!WalkEnabled && !SprintRunEnabled && !AimEnabled) 
+		if (!WalkEnabled && !SprintRunEnabled && !AimEnabled)
 			MovementState = EMovementState::Run_State;
 
 		else
 		{
 			if (SprintRunEnabled)
 			{
-				WalkEnabled = false;
-				AimEnabled = false;
-				MovementState = EMovementState::SprintRun_State;
+				if (Stamina > 0)
+				{
+					WalkEnabled = false;
+					AimEnabled = false;
+					MovementState = EMovementState::SprintRun_State;
+				}
+				else
+					SprintRunEnabled = false;
 			}
 
-			else if (WalkEnabled && !SprintRunEnabled && AimEnabled) 
+			else if (WalkEnabled && !SprintRunEnabled && AimEnabled)
 				MovementState = EMovementState::AimWalk_State;
 
 			else
 			{
-				if (WalkEnabled && !SprintRunEnabled && !AimEnabled) 
+				if (WalkEnabled && !SprintRunEnabled && !AimEnabled)
 					MovementState = EMovementState::Walk_State;
 
-				else 
+				else
 					MovementState = EMovementState::Aim_State;
 			}
 		}
@@ -250,9 +255,9 @@ void ATopDownShooterCharacter::ChangeMovementState()
 
 	else
 	{
-		if (AimEnabled) 
+		if (AimEnabled)
 			MovementState = EMovementState::AimStand_State;
-		else 
+		else
 			MovementState = EMovementState::Stand_State;
 	}
 
@@ -274,7 +279,7 @@ void ATopDownShooterCharacter::StaminaSystem(EMovementState State)
 		Stamina -= 1;
 
 		// if after decreasing stamina it besomes equal to zero, MovementState changes to Run_State
-		if (Stamina == 0)
+		if (Stamina <= 0)
 		{
 			MovementState = EMovementState::Run_State;
 			CharacterUpdate();
@@ -346,6 +351,7 @@ void ATopDownShooterCharacter::InitWeapon(FName IdWeapon)
 					MyWeapon->ReloadTime = MyWeaponInfo.ReloadTime;
 					MyWeapon->UpdateStateWeapon(MovementState);
 
+					MyWeapon->OnWeaponFire.AddDynamic(this, &ATopDownShooterCharacter::WeaponFire);
 					MyWeapon->OnWeaponReloadStart.AddDynamic(this, &ATopDownShooterCharacter::WeaponReloadStart);
 					MyWeapon->OnWeaponReloadEnd.AddDynamic(this, &ATopDownShooterCharacter::WeaponReloadEnd);
 				}
@@ -358,6 +364,11 @@ void ATopDownShooterCharacter::InitWeapon(FName IdWeapon)
 	}
 }
 
+void ATopDownShooterCharacter::WeaponFire(UAnimMontage* Anim)
+{
+	WeaponFire_BP(Anim);
+}
+
 void ATopDownShooterCharacter::WeaponReloadStart(UAnimMontage* Anim)
 {
 	WeaponReloadStart_BP(Anim);
@@ -366,6 +377,11 @@ void ATopDownShooterCharacter::WeaponReloadStart(UAnimMontage* Anim)
 void ATopDownShooterCharacter::WeaponReloadEnd()
 {
 	WeaponReloadEnd_BP();
+}
+
+void ATopDownShooterCharacter::WeaponFire_BP_Implementation(UAnimMontage* Anim)
+{
+	// In BluePrints
 }
 
 void ATopDownShooterCharacter::WeaponReloadStart_BP_Implementation(UAnimMontage* Anim)

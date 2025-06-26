@@ -63,10 +63,24 @@ void AProjectileDefault::InitProjectile(FProjectileInfo InitParam)
 	BulletProjectileMovement->MaxSpeed = InitParam.ProjectileInitSpeed;
 	this->SetLifeSpan(InitParam.ProjectileLifeTime);
 
+	if (!InitParam.Projectile)
+		BulletMesh->DestroyComponent();
+
+	if (InitParam.ProjectileTrialFX)
+	{
+		BulletFX->SetTemplate(ProjectileSetting.ProjectileTrialFX);
+		BulletFX->SetRelativeTransform(ProjectileSetting.ProjectileTrialFXOffset);
+	}
+	else
+		BulletFX->DestroyComponent();
+
+
 	ProjectileSetting = InitParam;
 }
 
-void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
+	AActor* OtherActor, UPrimitiveComponent* OtherComp, 
+	FVector NormalImpulse, const FHitResult& Hit)
 {
 	if (OtherActor && Hit.PhysMaterial.IsValid())
 	{
@@ -77,7 +91,9 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
 			UMaterialInterface* MyMaterial = ProjectileSetting.HitDecals[MySurfaceType];
 
 			if (MyMaterial && OtherComp)
-				UGameplayStatics::SpawnDecalAttached(MyMaterial, FVector(20.f), OtherComp, NAME_None, Hit.ImpactPoint, Hit.ImpactNormal.Rotation(), EAttachLocation::KeepWorldPosition, 10.f);
+				UGameplayStatics::SpawnDecalAttached(MyMaterial, FVector(20.f), OtherComp, 
+					NAME_None, Hit.ImpactPoint, Hit.ImpactNormal.Rotation(), 
+					EAttachLocation::KeepWorldPosition, 10.f);
 		}
 
 		if (ProjectileSetting.HitFXs.Contains(MySurfaceType))
@@ -85,7 +101,9 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
 			UParticleSystem* MyParticle = ProjectileSetting.HitFXs[MySurfaceType];
 
 			if (MyParticle)
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), MyParticle, FTransform(Hit.ImpactNormal.Rotation(), Hit.ImpactPoint, FVector(1.f)));
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), MyParticle, 
+					FTransform(Hit.ImpactNormal.Rotation(), Hit.ImpactPoint, 
+					FVector(1.f)));
 		}
 
 		if (ProjectileSetting.HitSound)
@@ -96,11 +114,15 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
 	ImpactProjectile();
 }
 
-void AProjectileDefault::BulletCollisionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AProjectileDefault::BulletCollisionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
+	AActor* OtherActor, UPrimitiveComponent* OtherComp, 
+	int32 OtherBodyIndex, bool bFromSweep, 
+	const FHitResult& SweepResult)
 {
 }
 
-void AProjectileDefault::BulletCollisionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void AProjectileDefault::BulletCollisionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, 
+	AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 }
 
