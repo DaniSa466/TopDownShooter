@@ -99,6 +99,11 @@ public:
 	void InitReload();
 	void FinishReload();
 
+	UFUNCTION(BlueprintNativeEvent)
+	void InitReload_BP();
+	UFUNCTION(BlueprintNativeEvent)
+	void FinishReload_BP();
+
 	bool BlockFire = false;
 
 	//Dispersion
@@ -118,8 +123,11 @@ public:
 	float DropShellTimer = -1.f;
 
 	UFUNCTION()
-	void InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection,
+	AStaticMeshActor* InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection,
 		float LifeTimeMesh, float ImpulseRandomDispersion, float PowerImpuls, float CustomMass);
+
+	UFUNCTION()
+	void DestroyDropMesh(AStaticMeshActor* ActorToDestroy);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 	bool ShowDebug = false;
