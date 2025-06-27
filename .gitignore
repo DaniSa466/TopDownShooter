@@ -33,3 +33,5 @@ DerivedDataCache/*
 *_BuildData.uasset
 *.zip
 \Content\Nimikko_WesternTown
+\Content\ParagonRevenant
+Content\Items\GameActor\Weapon
