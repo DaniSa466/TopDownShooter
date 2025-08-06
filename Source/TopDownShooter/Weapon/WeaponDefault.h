@@ -13,7 +13,7 @@
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponFireStart);//ToDo Delegate on event weapon fire - Anim char, state char...
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponFire, UAnimMontage*, Anim);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponReloadStart, UAnimMontage*, Anim);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponReloadEnd);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponReloadEnd, bool, bIsSuccess, int32, AmmoReamain);
 
 UCLASS()
 class TOPDOWNSHOOTER_API AWeaponDefault : public AActor
@@ -40,7 +40,7 @@ public:
 	UPROPERTY()
 	FWeaponInfo WeaponSetting;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Info")
-	FAdditionalWeaponInfo WeaponInfo;
+	FAdditionalWeaponInfo AdditionalWeaponInfo;
 
 protected:
 	// Called when the game starts or when spawned
@@ -98,12 +98,17 @@ public:
 
 	void InitReload();
 	void FinishReload();
+	void CancelReload();
+
+	/*bool CheckCanWeaponReload();
+	int8 GetAvialableAmmoForReload();*/
 
 	UFUNCTION(BlueprintNativeEvent)
 	void InitReload_BP();
 	UFUNCTION(BlueprintNativeEvent)
 	void FinishReload_BP();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool BlockFire = false;
 
 	//Dispersion
@@ -123,11 +128,8 @@ public:
 	float DropShellTimer = -1.f;
 
 	UFUNCTION()
-	AStaticMeshActor* InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection,
+	void InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection,
 		float LifeTimeMesh, float ImpulseRandomDispersion, float PowerImpuls, float CustomMass);
-
-	UFUNCTION()
-	void DestroyDropMesh(AStaticMeshActor* ActorToDestroy);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 	bool ShowDebug = false;

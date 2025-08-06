@@ -11,6 +11,7 @@
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "InventoryComponent.h"
 #include "TopDownShooter/Game/TopDownShooterGameInstance.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
@@ -43,6 +44,11 @@ ATopDownShooterCharacter::ATopDownShooterCharacter()
 	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+
+	if (InventoryComponent)
+		InventoryComponent->OnSwitchWeapon.AddDynamic(this, &ATopDownShooterCharacter::InitWeapon);
 
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
@@ -78,8 +84,6 @@ void ATopDownShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	InitWeapon(InitWeaponName);
-
 	if (CursorMaterial)
 	{
 		CurrentCursor = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), CursorMaterial, CursorSize, FVector(0));
@@ -96,6 +100,9 @@ void ATopDownShooterCharacter::SetupPlayerInputComponent(UInputComponent* NewInp
 	NewInputComponent->BindAction(TEXT("FireEvent"), EInputEvent::IE_Pressed, this, &ATopDownShooterCharacter::InputAttackPressed);
 	NewInputComponent->BindAction(TEXT("FireEvent"), EInputEvent::IE_Released, this, &ATopDownShooterCharacter::InputAttackReleased);
 	NewInputComponent->BindAction(TEXT("ReloadEvent"), EInputEvent::IE_Released, this, &ATopDownShooterCharacter::TryReloadWeapon);
+
+	NewInputComponent->BindAction(TEXT("SwitchNextWeapon"), EInputEvent::IE_Pressed, this, &ATopDownShooterCharacter::SwitchNextWeapon);
+	NewInputComponent->BindAction(TEXT("SwitchPreviousWeapon"), EInputEvent::IE_Pressed, this, &ATopDownShooterCharacter::SwitchPreviousWeapon);
 }
 
 void ATopDownShooterCharacter::InputAxisX(float Value)
@@ -120,7 +127,7 @@ void ATopDownShooterCharacter::InputAttackReleased()
 
 void ATopDownShooterCharacter::TryReloadWeapon()
 {
-	if (CurrentWeapon)
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading)
 		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound)
 			CurrentWeapon->InitReload();
 }
@@ -140,7 +147,6 @@ void ATopDownShooterCharacter::MovementTick(float DeltaTime)
 {
 	AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
 	AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
-	UE_LOG(LogTemp, Warning, TEXT("Movement: AxisX = %f. AxisY = %f. Speed = %f"), AxisX, AxisY, ResSpeed);
 		
 	APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
@@ -319,14 +325,20 @@ AWeaponDefault* ATopDownShooterCharacter::GetCurrentWeapon()
 	return CurrentWeapon;
 }
 
-void ATopDownShooterCharacter::InitWeapon(FName IdWeapon)
+void ATopDownShooterCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo AdditionalWeaponInfo, int32 NewCurrentIndexWeapon)
 {
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->Destroy();
+		CurrentWeapon = nullptr;
+	}
+
 	UTopDownShooterGameInstance* myGI = Cast<UTopDownShooterGameInstance>(GetGameInstance());
 	FWeaponInfo MyWeaponInfo;
 
 	if (myGI)
 	{
-		if (myGI->GetWeaponInfoByName(IdWeapon, MyWeaponInfo))
+		if (myGI->GetWeaponInfoByName(IdWeaponName, MyWeaponInfo))
 		{
 			if (MyWeaponInfo.WeaponClass)
 			{
@@ -346,10 +358,12 @@ void ATopDownShooterCharacter::InitWeapon(FName IdWeapon)
 					CurrentWeapon = MyWeapon;
 
 					MyWeapon->WeaponSetting = MyWeaponInfo;
-					MyWeapon->WeaponInfo.Round = MyWeaponInfo.MaxRound;
-					//Remove !!! Debug
+
 					MyWeapon->ReloadTime = MyWeaponInfo.ReloadTime;
 					MyWeapon->UpdateStateWeapon(MovementState);
+
+					MyWeapon->AdditionalWeaponInfo = AdditionalWeaponInfo;
+					CurrentIndexWeapon = NewCurrentIndexWeapon;
 
 					MyWeapon->OnWeaponFire.AddDynamic(this, &ATopDownShooterCharacter::WeaponFire);
 					MyWeapon->OnWeaponReloadStart.AddDynamic(this, &ATopDownShooterCharacter::WeaponReloadStart);
@@ -366,6 +380,9 @@ void ATopDownShooterCharacter::InitWeapon(FName IdWeapon)
 
 void ATopDownShooterCharacter::WeaponFire(UAnimMontage* Anim)
 {
+	if (InventoryComponent && CurrentWeapon)
+		InventoryComponent->SetAdditionalWeaponInfo(CurrentIndexWeapon, CurrentWeapon->AdditionalWeaponInfo);
+
 	WeaponFire_BP(Anim);
 }
 
@@ -374,9 +391,15 @@ void ATopDownShooterCharacter::WeaponReloadStart(UAnimMontage* Anim)
 	WeaponReloadStart_BP(Anim);
 }
 
-void ATopDownShooterCharacter::WeaponReloadEnd()
+void ATopDownShooterCharacter::WeaponReloadEnd(bool bIsSuccess, int32 AmmoTake)
 {
-	WeaponReloadEnd_BP();
+	if (InventoryComponent && CurrentWeapon)
+	{
+		InventoryComponent->WeaponChangeAmmo(CurrentWeapon->WeaponSetting.WeaponType, AmmoTake); 
+		InventoryComponent->SetAdditionalWeaponInfo(CurrentIndexWeapon, CurrentWeapon->AdditionalWeaponInfo);
+	}
+
+	WeaponReloadEnd_BP(bIsSuccess);
 }
 
 void ATopDownShooterCharacter::WeaponFire_BP_Implementation(UAnimMontage* Anim)
@@ -389,7 +412,7 @@ void ATopDownShooterCharacter::WeaponReloadStart_BP_Implementation(UAnimMontage*
 	// In BluePrints
 }
 
-void ATopDownShooterCharacter::WeaponReloadEnd_BP_Implementation()
+void ATopDownShooterCharacter::WeaponReloadEnd_BP_Implementation(bool bIsSuccess)
 {
 	//In BluePrints
 }
@@ -397,4 +420,48 @@ void ATopDownShooterCharacter::WeaponReloadEnd_BP_Implementation()
 UDecalComponent* ATopDownShooterCharacter::GetCursorToWorld()
 {
 	return CurrentCursor;
+}
+
+void ATopDownShooterCharacter::SwitchNextWeapon()
+{
+	if (InventoryComponent->WeaponSlots.Num() > 1)
+	{
+		FAdditionalWeaponInfo OldInfo;
+
+		if (CurrentWeapon)
+		{
+			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
+			if (CurrentWeapon->WeaponReloading)
+				CurrentWeapon->CancelReload();
+		}
+
+		if (InventoryComponent)
+		{
+			if (InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon + 1, CurrentIndexWeapon, OldInfo))
+			{ }
+		}
+	}
+}
+
+void ATopDownShooterCharacter::SwitchPreviousWeapon()
+{
+	if (InventoryComponent->WeaponSlots.Num() > 1)
+	{
+		uint8 OldIndex = CurrentIndexWeapon;
+		FAdditionalWeaponInfo OldInfo;
+
+		if (CurrentWeapon)
+		{
+			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
+			if (CurrentWeapon->WeaponReloading)
+				CurrentWeapon->CancelReload();
+		}
+
+		if (InventoryComponent)
+		{
+			if (InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon - 1, OldIndex, OldInfo))
+			{
+			}
+		}
+	}
 }

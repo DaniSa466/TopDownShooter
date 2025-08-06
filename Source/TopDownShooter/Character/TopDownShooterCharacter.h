@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "InventoryComponent.h"
 #include "TopDownShooter/FuncLibrary/Types.h"
 #include "TopDownShooter/Weapon/WeaponDefault.h"
 #include "TopDownShooterCharacter.generated.h"
@@ -28,6 +29,9 @@ public:
 	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class UInventoryComponent* InventoryComponent;
 
 private:
 	/** Top down camera */
@@ -138,7 +142,7 @@ public:
 	AWeaponDefault* GetCurrentWeapon();
 
 	UFUNCTION(BlueprintCallable)
-	void InitWeapon(FName IdWeapon);
+	void InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo AdditoinalWeaponInfo, int32 NewCurrentIndexWeapon);
 
 	UFUNCTION()
 	void WeaponFire(UAnimMontage* Anim);
@@ -147,7 +151,7 @@ public:
 	void WeaponReloadStart(UAnimMontage* Anim);
 	
 	UFUNCTION()
-	void WeaponReloadEnd();
+	void WeaponReloadEnd(bool bIsSuccess, int32 AmmoTake);
 
 	UFUNCTION(BlueprintNativeEvent)
 	void WeaponFire_BP(UAnimMontage* Anim);
@@ -156,8 +160,15 @@ public:
 	void WeaponReloadStart_BP(UAnimMontage* Anim);
 
 	UFUNCTION(BlueprintNativeEvent)
-	void WeaponReloadEnd_BP();
+	void WeaponReloadEnd_BP(bool bIsSuccess);
 
 	UFUNCTION(BlueprintCallable)
 	UDecalComponent* GetCursorToWorld();
+
+	//Inventory functions
+	void SwitchNextWeapon();
+	void SwitchPreviousWeapon();
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	int32 CurrentIndexWeapon = 0;
 };

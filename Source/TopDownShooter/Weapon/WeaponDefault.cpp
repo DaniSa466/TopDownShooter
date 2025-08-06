@@ -105,21 +105,14 @@ void AWeaponDefault::DispersionTick(float DeltaTime)
 
 void AWeaponDefault::ClipDropTick(float DeltaTime)
 {
-	AStaticMeshActor* DropClip = nullptr;
 	if (DropClipFlag)
 		if (DropClipTimer < 0.0f)
 		{
 			DropClipFlag = false;
-			DropClip = InitDropMesh(WeaponSetting.ClipDropMesh.DropMesh, WeaponSetting.ClipDropMesh.DropMeshOffset,
+			InitDropMesh(WeaponSetting.ClipDropMesh.DropMesh, WeaponSetting.ClipDropMesh.DropMeshOffset,
 				WeaponSetting.ClipDropMesh.DropMeshImpulsDirection, WeaponSetting.ClipDropMesh.DropMeshLifeTime,
 				WeaponSetting.ClipDropMesh.ImpulsRandomDispersion, WeaponSetting.ClipDropMesh.PowerImpuls,
 				WeaponSetting.ClipDropMesh.CustomMass);
-
-			//does not work
-			/*if (DropClip->InitialLifeSpan <= 0.0f)
-				DestroyDropMesh(DropClip);
-			else
-				DropClip->InitialLifeSpan -= DeltaTime;*/
 		}
 		else
 			DropClipTimer -= DeltaTime;
@@ -127,21 +120,14 @@ void AWeaponDefault::ClipDropTick(float DeltaTime)
 
 void AWeaponDefault::ShellDropTick(float DeltaTime)
 {
-	AStaticMeshActor* DropShell = nullptr;
 	if (DropShellFlag)
-		if (DropShellTimer < 0.0f)
+		if (DropShellTimer <= 0.0f)
 		{
 			DropShellFlag = false;
-			DropShell = InitDropMesh(WeaponSetting.ShellDropMesh.DropMesh, WeaponSetting.ShellDropMesh.DropMeshOffset,
+			InitDropMesh(WeaponSetting.ShellDropMesh.DropMesh, WeaponSetting.ShellDropMesh.DropMeshOffset,
 				WeaponSetting.ShellDropMesh.DropMeshImpulsDirection, WeaponSetting.ShellDropMesh.DropMeshLifeTime,
 				WeaponSetting.ShellDropMesh.ImpulsRandomDispersion, WeaponSetting.ShellDropMesh.PowerImpuls,
 				WeaponSetting.ShellDropMesh.CustomMass);
-
-			//does not work
-			/*if (DropShell->InitialLifeSpan <= 0.0f)
-				DestroyDropMesh(DropShell);
-			else
-				DropShell->InitialLifeSpan -= DeltaTime;*/
 		}
 		else
 			DropShellTimer -= DeltaTime;
@@ -173,7 +159,7 @@ void AWeaponDefault::SetWeaponStateFire(bool bIsFire)
 
 bool AWeaponDefault::CheckWeaponCanFire()
 {
-	return !BlockFire;
+	return !BlockFire && !WeaponReloading;
 }
 
 FProjectileInfo AWeaponDefault::GetProjectile()
@@ -207,12 +193,12 @@ void AWeaponDefault::Fire()
 				DropShellTimer = WeaponSetting.ShellDropMesh.DropMeshTime;
 			}
 
+		FireTime = WeaponSetting.RateOfFire;
+		AdditionalWeaponInfo.Round--;
+		ChangeDispersionByShoot();
+
 		if (AnimToPlay)
 			OnWeaponFire.Broadcast(AnimToPlay);
-
-		FireTime = WeaponSetting.RateOfFire;
-		WeaponInfo.Round--;
-		ChangeDispersionByShoot();
 
 		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), WeaponSetting.SoundFireWeapon, ShootLocation->GetComponentLocation());
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), WeaponSetting.EffectFireWeapon, ShootLocation->GetComponentTransform());
@@ -360,7 +346,6 @@ void AWeaponDefault::UpdateStateWeapon(EMovementState NewMovementState)
 		break;
 	case EMovementState::SprintRun_State:
 		BlockFire = true;
-		SetWeaponStateFire(false);
 		break;
 	default:
 		break;
@@ -390,7 +375,6 @@ FVector AWeaponDefault::GetFireEndLocation() const
 
 	
 	FVector tmpV = (ShootLocation->GetComponentLocation() - ShootEndLocation);
-	//UE_LOG(LogTemp, Warning, TEXT("Vector X = %f. Y = %f. Size = %f"), tmpV.X, tmpV.Y, tmpV.Size());
 	if (tmpV.Size() > SizeVectorToChangeShootDirectionLogic)
 	{
 		DirectionShoot = ShootLocation->GetComponentLocation() - ShootEndLocation;
@@ -437,14 +421,12 @@ int8 AWeaponDefault::GetNumberProjectileByShoot() const
 
 int32 AWeaponDefault::GetWeaponRound()
 {
-	return WeaponInfo.Round;
+	return AdditionalWeaponInfo.Round;
 }
 
 void AWeaponDefault::InitReload()
 {
-	WeaponInfo.Round = 0;
 	WeaponReloading = true;
-	BlockFire = true;
 
 	ReloadTimer = WeaponSetting.ReloadTime;
 
@@ -477,12 +459,25 @@ void AWeaponDefault::InitReload()
 void AWeaponDefault::FinishReload()
 {
 	WeaponReloading = false;
+	int8 AmmoTaken = AdditionalWeaponInfo.Round;
+	AmmoTaken -= WeaponSetting.MaxRound;
+
+	AdditionalWeaponInfo.Round = WeaponSetting.MaxRound;
+
+	OnWeaponReloadEnd.Broadcast(true, AmmoTaken);
+	FinishReload_BP();
+}
+
+void AWeaponDefault::CancelReload()
+{
+	WeaponReloading = false;
 	BlockFire = false;
 
-	WeaponInfo.Round = WeaponSetting.MaxRound;
+	if (SkeletalMeshWeapon && SkeletalMeshWeapon->GetAnimInstance())
+		SkeletalMeshWeapon->GetAnimInstance()->StopAllMontages(0.15f);
 
-	OnWeaponReloadEnd.Broadcast();
-	FinishReload_BP();
+	OnWeaponReloadEnd.Broadcast(false, 0);
+	DropClipFlag = false;
 }
 
 void AWeaponDefault::InitReload_BP_Implementation()
@@ -495,7 +490,7 @@ void AWeaponDefault::FinishReload_BP_Implementation()
 	//In BluePrints
 }
 
-AStaticMeshActor* AWeaponDefault::InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection, 
+void AWeaponDefault::InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection, 
 	float LifeTimeMesh, float ImpulseRandomDispersion, float PowerImpulse, float CustomMass)
 {
 	if (DropMesh)
@@ -550,15 +545,6 @@ AStaticMeshActor* AWeaponDefault::InitDropMesh(UStaticMesh* DropMesh, FTransform
 				ActorToSpawn->GetStaticMeshComponent()->AddImpulse(FinalDirection * PowerImpulse);
 			}
 		}
-		return ActorToSpawn;
 	}
-
-	else
-		return nullptr;
-}
-
-void AWeaponDefault::DestroyDropMesh(AStaticMeshActor* ActorToDestroy)
-{
-	ActorToDestroy->Destroy();
 }
 
