@@ -10,6 +10,8 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnSwitchWeapon, FName, IdWeaponName, FAdditionalWeaponInfo, AdditionalWeaponInfo, int32, NewCurrentIndexWeapon);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAmmoChange, EWeaponType, AmmoType, int32, Count);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponChangeAdditionalInfo, int32, IndexSlot, FAdditionalWeaponInfo, AditionalInfo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAmmoEmpty, EWeaponType, WeaponType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAmmoAvialable, EWeaponType, WeaponType);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class TOPDOWNSHOOTER_API UInventoryComponent : public UActorComponent
@@ -25,6 +27,10 @@ public:
 	FOnAmmoChange OnAmmoChange;
 	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	FOnWeaponChangeAdditionalInfo OnWeaponChangeAdditionalInfo;
+	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	FOnAmmoEmpty OnAmmoEmpty;
+	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	FOnAmmoAvialable OnAmmoAvialable;
 
 protected:
 	// Called when the game starts
@@ -42,10 +48,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapons")
 	int32 MaxSlotsWeapon = 0;
 
-	bool SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdditionalWeaponInfo OldInfo);
+	bool SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdditionalWeaponInfo OldInfo, bool bIsForward);
+	bool CheckAmmoForWeapon(EWeaponType WeaponType, int16 &AvialableAmmoForWeapon);
 
 	FAdditionalWeaponInfo GetAdditionalWeaponInfo(int8 WeaponIndex);
 	int8 GetWeaponIndexSlotByName(FName WeaponName);
 	void SetAdditionalWeaponInfo(int8 WeaponIndex, FAdditionalWeaponInfo NewInfo);
-	void WeaponChangeAmmo(EWeaponType TypeWeapon, int32 TakenAmmo);
+	void AmmoSlotChangeValue(EWeaponType TypeWeapon, int32 TakenAmmo);
 };

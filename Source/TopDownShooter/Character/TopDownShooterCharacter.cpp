@@ -128,7 +128,7 @@ void ATopDownShooterCharacter::InputAttackReleased()
 void ATopDownShooterCharacter::TryReloadWeapon()
 {
 	if (CurrentWeapon && !CurrentWeapon->WeaponReloading)
-		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound)
+		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSettings.MaxRound)
 			CurrentWeapon->InitReload();
 }
 
@@ -347,7 +347,7 @@ void ATopDownShooterCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponI
 
 				FActorSpawnParameters SpawnParameters;
 				SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-				SpawnParameters.Owner = GetOwner();
+				SpawnParameters.Owner = this;
 				SpawnParameters.Instigator = GetInstigator();
 
 				AWeaponDefault* MyWeapon = Cast<AWeaponDefault>(GetWorld()->SpawnActor(MyWeaponInfo.WeaponClass, &SpawnLocation, &SpawnRotation, SpawnParameters));
@@ -357,17 +357,26 @@ void ATopDownShooterCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponI
 					MyWeapon->AttachToComponent(GetMesh(), Rule, FName("WeaponSocketRightHand"));
 					CurrentWeapon = MyWeapon;
 
-					MyWeapon->WeaponSetting = MyWeaponInfo;
+					MyWeapon->WeaponSettings = MyWeaponInfo;
+					MyWeapon->AdditionalWeaponInfo.Round = MyWeaponInfo.MaxRound;
 
 					MyWeapon->ReloadTime = MyWeaponInfo.ReloadTime;
 					MyWeapon->UpdateStateWeapon(MovementState);
 
 					MyWeapon->AdditionalWeaponInfo = AdditionalWeaponInfo;
-					CurrentIndexWeapon = NewCurrentIndexWeapon;
+					//CurrentIndexWeapon = NewCurrentIndexWeapon;
+					if (InventoryComponent)
+						CurrentIndexWeapon = InventoryComponent->GetWeaponIndexSlotByName(IdWeaponName);
 
 					MyWeapon->OnWeaponFire.AddDynamic(this, &ATopDownShooterCharacter::WeaponFire);
 					MyWeapon->OnWeaponReloadStart.AddDynamic(this, &ATopDownShooterCharacter::WeaponReloadStart);
 					MyWeapon->OnWeaponReloadEnd.AddDynamic(this, &ATopDownShooterCharacter::WeaponReloadEnd);
+
+					//try reload weapon after switching if it's possible and needed
+					if (CurrentWeapon->GetWeaponRound() <= 0 && CurrentWeapon->GetAvialableAmmo() > 0)
+						CurrentWeapon->InitReload();
+
+					InventoryComponent->OnAmmoAvialable.Broadcast(MyWeapon->WeaponSettings.WeaponType);
 				}
 			}
 		}
@@ -395,7 +404,7 @@ void ATopDownShooterCharacter::WeaponReloadEnd(bool bIsSuccess, int32 AmmoTake)
 {
 	if (InventoryComponent && CurrentWeapon)
 	{
-		InventoryComponent->WeaponChangeAmmo(CurrentWeapon->WeaponSetting.WeaponType, AmmoTake); 
+		InventoryComponent->AmmoSlotChangeValue(CurrentWeapon->WeaponSettings.WeaponType, AmmoTake); 
 		InventoryComponent->SetAdditionalWeaponInfo(CurrentIndexWeapon, CurrentWeapon->AdditionalWeaponInfo);
 	}
 
@@ -437,8 +446,7 @@ void ATopDownShooterCharacter::SwitchNextWeapon()
 
 		if (InventoryComponent)
 		{
-			if (InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon + 1, CurrentIndexWeapon, OldInfo))
-			{ }
+			InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon + 1, CurrentIndexWeapon, OldInfo, true);
 		}
 	}
 }
@@ -447,7 +455,7 @@ void ATopDownShooterCharacter::SwitchPreviousWeapon()
 {
 	if (InventoryComponent->WeaponSlots.Num() > 1)
 	{
-		uint8 OldIndex = CurrentIndexWeapon;
+		int8 OldIndex = CurrentIndexWeapon;
 		FAdditionalWeaponInfo OldInfo;
 
 		if (CurrentWeapon)
@@ -459,9 +467,7 @@ void ATopDownShooterCharacter::SwitchPreviousWeapon()
 
 		if (InventoryComponent)
 		{
-			if (InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon - 1, OldIndex, OldInfo))
-			{
-			}
+			InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon - 1, OldIndex, OldInfo, false);
 		}
 	}
 }

@@ -38,7 +38,7 @@ public:
 	class UArrowComponent* ShootLocation = nullptr;
 
 	UPROPERTY()
-	FWeaponInfo WeaponSetting;
+	FWeaponInfo WeaponSettings;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Info")
 	FAdditionalWeaponInfo AdditionalWeaponInfo;
 
@@ -61,6 +61,8 @@ public:
 	void ShellDropTick(float DeltaTime);
 
 	void WeaponInit();
+
+	FName CurrentWeaponName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLogic")
 	bool WeaponFiring = false;
@@ -100,8 +102,7 @@ public:
 	void FinishReload();
 	void CancelReload();
 
-	/*bool CheckCanWeaponReload();
-	int8 GetAvialableAmmoForReload();*/
+	int16 GetAvialableAmmo();
 
 	UFUNCTION(BlueprintNativeEvent)
 	void InitReload_BP();
