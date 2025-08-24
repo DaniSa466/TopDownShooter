@@ -263,7 +263,7 @@ struct FAdditionalWeaponInfo
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Stats")
-	int32 Round = 45;
+	int32 Round = 0;
 };
 
 USTRUCT(BlueprintType)
@@ -292,6 +292,19 @@ struct FAmmoSlot
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AmmoSlot")
 	int32 MaxCount = 100;
+};
+
+USTRUCT(BlueprintType)
+struct FDropItem : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DropWeapon")
+	UStaticMesh* WeaponStaticMesh = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DropWeapon")
+	USkeletalMesh* WeaponSkeletalMesh = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DropWeapon")
+	FWeaponSlot WeaponInfo;
 };
 
 UCLASS()

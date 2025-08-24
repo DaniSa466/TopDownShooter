@@ -24,3 +24,28 @@ bool UTopDownShooterGameInstance::GetWeaponInfoByName(FName NameWeapon, FWeaponI
 
     return bIsFind;
 }
+
+bool UTopDownShooterGameInstance::GetDropItemInfoByName(FName NameItem, FDropItem& OutInfo)
+{
+    bool bIsFound = false;
+    
+    if (DropItemInfoTable)
+    {
+        FDropItem* DropItemInfoRow;
+        TArray<FName> RowNames = DropItemInfoTable->GetRowNames();
+        int8 i = 0;
+
+        while (i < RowNames.Num() && !bIsFound)
+        {
+            DropItemInfoRow = DropItemInfoTable->FindRow<FDropItem>(RowNames[i], "");
+            if (DropItemInfoRow->WeaponInfo.NameItem == NameItem)
+            {
+                OutInfo = *DropItemInfoRow;
+                bIsFound = true;
+            }
+            i++;
+        }
+    }
+
+    return bIsFound;
+}

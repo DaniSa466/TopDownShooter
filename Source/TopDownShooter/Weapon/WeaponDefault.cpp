@@ -478,7 +478,7 @@ void AWeaponDefault::FinishReload()
 
 	if (AmmoTaken > AvialableAmmo)
 		AmmoTaken = AvialableAmmo;
-	OnWeaponReloadEnd.Broadcast(true, AmmoTaken);
+	OnWeaponReloadEnd.Broadcast(true, -AmmoTaken);
 	FinishReload_BP();
 }
 

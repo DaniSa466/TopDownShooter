@@ -30,13 +30,10 @@ void UInventoryComponent::BeginPlay()
 				FWeaponInfo Info;
 				if (myGI->GetWeaponInfoByName(WeaponSlots[i].NameItem, Info))
 					WeaponSlots[i].AdditionalInfo.Round = Info.MaxRound;
-				else
-				{
-					WeaponSlots.RemoveAt(i);
-					i--;
-				}
 			}
 	}
+
+	MaxSlotsWeapon = WeaponSlots.Num(); 
 
 	if (WeaponSlots.IsValidIndex(0))
 		if (!WeaponSlots[0].NameItem.IsNone())
@@ -67,6 +64,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 
 	FName NewIdWeapon;
 	FAdditionalWeaponInfo NewAdditionalInfo;
+	int32 NewCurrentIndex = 0;
 	
 	if (WeaponSlots.IsValidIndex(CorrectIndex))
 	{
@@ -86,7 +84,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 
 					bool bIsFound = false;
 					int8 i = 0;
-					while (i < AmmoSlots.Num() - 1 && !bIsFound)
+					while (i < AmmoSlots.Num() && !bIsFound)
 					{
 						if (AmmoSlots[i].WeaponType == myInfo.WeaponType && AmmoSlots[i].count > 0)
 						{
@@ -101,6 +99,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 
 			if (bIsSuccess)
 			{
+				NewCurrentIndex = CorrectIndex;
 				NewIdWeapon = WeaponSlots[CorrectIndex].NameItem;
 				NewAdditionalInfo = WeaponSlots[CorrectIndex].AdditionalInfo;
 			}
@@ -126,6 +125,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 							bIsSuccess = true;
 							NewIdWeapon = WeaponSlots[tmpIndex].NameItem;
 							NewAdditionalInfo = WeaponSlots[tmpIndex].AdditionalInfo;
+							NewCurrentIndex = tmpIndex;
 						}
 						else
 						{
@@ -136,7 +136,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 
 							bool bIsFound = false;
 							int8 j = 0;
-							while (j < AmmoSlots.Num() - 1 && !bIsFound)
+							while (j < AmmoSlots.Num() && !bIsFound)
 							{
 								if (AmmoSlots[j].WeaponType == myInfo.WeaponType && AmmoSlots[j].count > 0)
 								{
@@ -144,6 +144,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 									bIsSuccess = true;
 									NewIdWeapon = WeaponSlots[tmpIndex].NameItem;
 									NewAdditionalInfo = WeaponSlots[tmpIndex].AdditionalInfo;
+									NewCurrentIndex = tmpIndex;
 									bIsFound = true;
 								}
 								j++;
@@ -165,6 +166,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 									bIsSuccess = true;
 									NewIdWeapon = WeaponSlots[secondIteration].NameItem;
 									NewAdditionalInfo = WeaponSlots[secondIteration].AdditionalInfo;
+									NewCurrentIndex = secondIteration;
 								}
 								else
 								{
@@ -175,7 +177,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 
 									bool bIsFound = false;
 									int8 j = 0;
-									while (j < AmmoSlots.Num() - 1 && !bIsFound)
+									while (j < AmmoSlots.Num() && !bIsFound)
 									{
 										if (AmmoSlots[j].WeaponType == myInfo.WeaponType && AmmoSlots[j].count > 0)
 										{
@@ -183,6 +185,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 											bIsSuccess = true;
 											NewIdWeapon = WeaponSlots[secondIteration].NameItem;
 											NewAdditionalInfo = WeaponSlots[secondIteration].AdditionalInfo;
+											NewCurrentIndex = secondIteration;
 											bIsFound = true;
 										}
 										j++;
@@ -213,7 +216,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 
 									bool bIsFound = false;
 									int8 j = 0;
-									while (j < AmmoSlots.Num() - 1 && !bIsFound)
+									while (j < AmmoSlots.Num() && !bIsFound)
 									{
 										if (AmmoSlots[j].WeaponType == myInfo.WeaponType)
 										{
@@ -252,6 +255,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 							bIsSuccess = true;
 							NewIdWeapon = WeaponSlots[tmpIndex].NameItem;
 							NewAdditionalInfo = WeaponSlots[tmpIndex].AdditionalInfo;
+							NewCurrentIndex = tmpIndex;
 						}
 						else
 						{
@@ -262,7 +266,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 
 							bool bIsFound = false;
 							int8 j = 0;
-							while (j < AmmoSlots.Num() - 1 && !bIsFound)
+							while (j < AmmoSlots.Num() && !bIsFound)
 							{
 								if (AmmoSlots[j].WeaponType == myInfo.WeaponType && AmmoSlots[j].count > 0)
 								{
@@ -270,6 +274,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 									bIsSuccess = true;
 									NewIdWeapon = WeaponSlots[tmpIndex].NameItem;
 									NewAdditionalInfo = WeaponSlots[tmpIndex].AdditionalInfo;
+									NewCurrentIndex = tmpIndex;
 									bIsFound = true;
 								}
 								j++;
@@ -291,6 +296,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 									bIsSuccess = true;
 									NewIdWeapon = WeaponSlots[secondIteration].NameItem;
 									NewAdditionalInfo = WeaponSlots[secondIteration].AdditionalInfo;
+									NewCurrentIndex = secondIteration;
 								}
 								else
 								{
@@ -301,7 +307,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 
 									bool bIsFound = false;
 									int8 j = 0;
-									while (j < AmmoSlots.Num() - 1 && !bIsFound)
+									while (j < AmmoSlots.Num() && !bIsFound)
 									{
 										if (AmmoSlots[j].WeaponType == myInfo.WeaponType && AmmoSlots[j].count > 0)
 										{
@@ -309,6 +315,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 											bIsSuccess = true;
 											NewIdWeapon = WeaponSlots[secondIteration].NameItem;
 											NewAdditionalInfo = WeaponSlots[secondIteration].AdditionalInfo;
+											NewCurrentIndex = secondIteration;
 											bIsFound = true;
 										}
 										j++;
@@ -339,7 +346,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 
 									bool bIsFound = false;
 									int8 j = 0;
-									while (j < AmmoSlots.Num() - 1 && !bIsFound)
+									while (j < AmmoSlots.Num() && !bIsFound)
 									{
 										if (AmmoSlots[j].WeaponType == myInfo.WeaponType)
 										{
@@ -366,7 +373,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdd
 	if (bIsSuccess)
 	{
 		SetAdditionalWeaponInfo(OldIndex, OldInfo);
-		OnSwitchWeapon.Broadcast(NewIdWeapon, NewAdditionalInfo, CorrectIndex);
+		OnSwitchWeapon.Broadcast(NewIdWeapon, NewAdditionalInfo, NewCurrentIndex);
 	}
 
 	return bIsSuccess;
@@ -377,7 +384,7 @@ bool UInventoryComponent::CheckAmmoForWeapon(EWeaponType WeaponType, int16 &Avia
 	AvialableAmmoForWeapon = 0;
 	bool bIsFound = false;
 	int8 i = 0;
-	while (i < AmmoSlots.Num() - 1 && !bIsFound)
+	while (i < AmmoSlots.Num() && !bIsFound)
 	{
 		if (AmmoSlots[i].WeaponType == WeaponType)
 		{
@@ -437,13 +444,23 @@ int8 UInventoryComponent::GetWeaponIndexSlotByName(FName WeaponName)
 	return result;
 }
 
+FName UInventoryComponent::GetWeaponNameByIndexSlot(int8 IndexSlot)
+{
+	FName result;
+
+	if (WeaponSlots.IsValidIndex(IndexSlot))
+		result = WeaponSlots[IndexSlot].NameItem;
+
+	return result;
+}
+
 void UInventoryComponent::SetAdditionalWeaponInfo(int8 WeaponIndex, FAdditionalWeaponInfo NewInfo)
 {
 	if (WeaponSlots.IsValidIndex(WeaponIndex))
 	{
 		bool bIsFound = false;
 		int8 i = 0;
-		while (i <= WeaponSlots.Num() - 1 && !bIsFound)
+		while (i <= WeaponSlots.Num() && !bIsFound)
 		{
 			if (i == WeaponIndex)
 			{
@@ -472,7 +489,7 @@ void UInventoryComponent::AmmoSlotChangeValue(EWeaponType TypeWeapon, int32 Take
 	{
 		if (AmmoSlots[i].WeaponType == TypeWeapon)
 		{
-			AmmoSlots[i].count -= TakenAmmo;
+			AmmoSlots[i].count += TakenAmmo;
 
 			if (AmmoSlots[i].count > AmmoSlots[i].MaxCount)
 				AmmoSlots[i].count = AmmoSlots[i].MaxCount;
@@ -483,5 +500,84 @@ void UInventoryComponent::AmmoSlotChangeValue(EWeaponType TypeWeapon, int32 Take
 
 		i++;
 	}
-} 
+}
+bool UInventoryComponent::CheckCanTakeAmmo(EWeaponType AmmoType)
+{
+	bool result = false;
+	int8 i = 0;
+	while (i < AmmoSlots.Num() && !result)
+	{
+		if (AmmoSlots[i].WeaponType == AmmoType && AmmoSlots[i].count < AmmoSlots[i].MaxCount)
+			result = true;
+		i++;
+	}
+	return result;
+}
+
+bool UInventoryComponent::CheckCanTakeWeapon(int32 &FreeSlot)
+{
+	bool FreeSlotIsFound = false; 
+	int8 i = 0;
+
+	while (i < WeaponSlots.Num() && !FreeSlotIsFound)
+	{
+		if (WeaponSlots[i].NameItem.IsNone())
+		{
+			FreeSlotIsFound = true;
+			FreeSlot = i;
+		}
+		i++;
+	}
+
+	return FreeSlotIsFound;
+}
+
+bool UInventoryComponent::PickUpWeapon(FWeaponSlot NewWeapon, int32 WeaponIndexToChange, int32 CurrentWeaponIndex, FDropItem &DropItemInfo)
+{
+	bool result = false;
+	if (GetDropItemFropInventory(WeaponIndexToChange, DropItemInfo))
+	{
+		WeaponSlots[WeaponIndexToChange] = NewWeapon;
+
+		SwitchWeaponToIndex(CurrentWeaponIndex, -1, NewWeapon.AdditionalInfo, false);
+		OnUpdateWeaponSlots.Broadcast(WeaponIndexToChange, NewWeapon);
+
+		result = true;
+	}
+	return result;
+}
+
+bool UInventoryComponent::TryGetWeaponToInventory(FWeaponSlot NewWeapon)
+{
+	int IndexSlot = -1;
+	
+	if (CheckCanTakeWeapon(IndexSlot))
+		if (WeaponSlots.IsValidIndex(IndexSlot))
+		{
+			WeaponSlots[IndexSlot] = NewWeapon;
+			OnUpdateWeaponSlots.Broadcast(IndexSlot, NewWeapon);
+			return true;
+		}
+	return false;
+}
+
+bool UInventoryComponent::GetDropItemFropInventory(int32 WeaponIndexToDrop, FDropItem &DropItemInfo)
+{
+	bool result = false;
+	if (WeaponSlots.IsValidIndex(WeaponIndexToDrop))
+		result = true;
+
+	bool bCanDrop = false;
+	FName DropItemName = GetWeaponNameByIndexSlot(WeaponIndexToDrop);
+
+	UTopDownShooterGameInstance* myGI = Cast<UTopDownShooterGameInstance>(GetWorld()->GetGameInstance());
+	if (myGI)
+	{
+		bCanDrop = myGI->GetDropItemInfoByName(DropItemName, DropItemInfo);
+		DropItemInfo.WeaponInfo.AdditionalInfo = WeaponSlots[WeaponIndexToDrop].AdditionalInfo;
+	}
+
+	return result && bCanDrop;
+}
+
 
