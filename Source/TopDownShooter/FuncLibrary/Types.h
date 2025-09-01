@@ -24,8 +24,8 @@ enum class EWeaponType : uint8
 	RifleType UMETA(DisplayName = "Rifle"),
 	SniperRifleType UMETA(DisplayName = "SniperRifle"),
 	ShotGunType UMETA(DisplayName = "ShotGun"),
-	GrenadeLauncherType UMETA(DisplayName = "GrenadeLauncher"),
-	PistolType UMETA(DisplayName = "Pistol")
+	GrenadeLauncherType UMETA(DisplayName = "GrenadeLauncher")
+	//PistolType UMETA(DisplayName = "Pistol")
 };
 
 USTRUCT(BlueprintType)
@@ -303,6 +303,10 @@ struct FDropItem : public FTableRowBase
 	UStaticMesh* WeaponStaticMesh = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DropWeapon")
 	USkeletalMesh* WeaponSkeletalMesh = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DropWeapon")
+	UParticleSystem* ParticleItem = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DropWeapon")
+	FTransform Offset;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DropWeapon")
 	FWeaponSlot WeaponInfo;
 };

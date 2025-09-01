@@ -25,16 +25,16 @@ bool UTopDownShooterGameInstance::GetWeaponInfoByName(FName NameWeapon, FWeaponI
     return bIsFind;
 }
 
-bool UTopDownShooterGameInstance::GetDropItemInfoByName(FName NameItem, FDropItem& OutInfo)
+bool UTopDownShooterGameInstance::GetDropItemInfoByWeaponName(FName NameItem, FDropItem& OutInfo)
 {
     bool bIsFound = false;
-    
+
     if (DropItemInfoTable)
     {
         FDropItem* DropItemInfoRow;
         TArray<FName> RowNames = DropItemInfoTable->GetRowNames();
-        int8 i = 0;
 
+        int8 i = 0;
         while (i < RowNames.Num() && !bIsFound)
         {
             DropItemInfoRow = DropItemInfoTable->FindRow<FDropItem>(RowNames[i], "");
@@ -46,6 +46,32 @@ bool UTopDownShooterGameInstance::GetDropItemInfoByName(FName NameItem, FDropIte
             i++;
         }
     }
+
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("UGameInstance::GetWeaponItemInfoByWeaponName - DropItemInfoTable is NULL"));
+    }
+
+    return bIsFound;
+}
+
+bool UTopDownShooterGameInstance::GetDropItemInfoByName(FName NameItem, FDropItem& OutInfo)
+{
+    bool bIsFound = false;
+    FDropItem* DropItemInfoRow;
+
+    if (DropItemInfoTable)
+    {
+        DropItemInfoRow = DropItemInfoTable->FindRow<FDropItem>(NameItem, "", false);
+
+        if (DropItemInfoRow)
+        {
+            OutInfo = *DropItemInfoRow;
+            bIsFound = true;
+        }
+    }
+    else
+        UE_LOG(LogTemp, Warning, TEXT("UGameInstance::GetDropItemInfoByName - DropItemInfoTable - NULL"));
 
     return bIsFound;
 }

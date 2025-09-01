@@ -516,7 +516,7 @@ bool UInventoryComponent::CheckCanTakeAmmo(EWeaponType AmmoType)
 
 bool UInventoryComponent::CheckCanTakeWeapon(int32 &FreeSlot)
 {
-	bool FreeSlotIsFound = false; 
+	bool FreeSlotIsFound = false;  
 	int8 i = 0;
 
 	while (i < WeaponSlots.Num() && !FreeSlotIsFound)
@@ -547,18 +547,30 @@ bool UInventoryComponent::PickUpWeapon(FWeaponSlot NewWeapon, int32 WeaponIndexT
 	return result;
 }
 
-bool UInventoryComponent::TryGetWeaponToInventory(FWeaponSlot NewWeapon)
+bool UInventoryComponent::TryGetWeaponToInventory(FWeaponSlot NewWeapon, bool &BPWeaponIsInInventory)
 {
-	int IndexSlot = -1;
+	bool CanTake = false;
+	int32 IndexSlot = -1;
 	
-	if (CheckCanTakeWeapon(IndexSlot))
-		if (WeaponSlots.IsValidIndex(IndexSlot))
-		{
-			WeaponSlots[IndexSlot] = NewWeapon;
-			OnUpdateWeaponSlots.Broadcast(IndexSlot, NewWeapon);
-			return true;
-		}
-	return false;
+	// Check if inventory alredy has this weapon
+	bool WeaponIsInInventory = false;
+	int8 i = 0;
+
+	while (i < WeaponSlots.Num() && !WeaponIsInInventory)
+	{
+		if (WeaponSlots[i].NameItem == NewWeapon.NameItem)
+			WeaponIsInInventory = true;
+		i++;
+	}
+	BPWeaponIsInInventory = WeaponIsInInventory;
+
+	if (CheckCanTakeWeapon(IndexSlot) && !WeaponIsInInventory)
+	{
+		WeaponSlots[IndexSlot] = NewWeapon;
+		OnUpdateWeaponSlots.Broadcast(IndexSlot, NewWeapon);
+		CanTake = true;
+	}
+	return CanTake;
 }
 
 bool UInventoryComponent::GetDropItemFropInventory(int32 WeaponIndexToDrop, FDropItem &DropItemInfo)
@@ -573,7 +585,7 @@ bool UInventoryComponent::GetDropItemFropInventory(int32 WeaponIndexToDrop, FDro
 	UTopDownShooterGameInstance* myGI = Cast<UTopDownShooterGameInstance>(GetWorld()->GetGameInstance());
 	if (myGI)
 	{
-		bCanDrop = myGI->GetDropItemInfoByName(DropItemName, DropItemInfo);
+		bCanDrop = myGI->GetDropItemInfoByWeaponName(DropItemName, DropItemInfo);
 		DropItemInfo.WeaponInfo.AdditionalInfo = WeaponSlots[WeaponIndexToDrop].AdditionalInfo;
 	}
 

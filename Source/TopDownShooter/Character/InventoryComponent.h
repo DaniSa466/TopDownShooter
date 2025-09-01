@@ -71,9 +71,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PickUpItems")
 	bool CheckCanTakeWeapon(int32 &FreeSlot);
 	UFUNCTION(BlueprintCallable, Category = "PickUpItems")
-	bool PickUpWeapon(FWeaponSlot NewWeapon, int32 WeaponIndexToChange, int32 CurrentWeaponIndex, FDropItem &DropItemInfo);
+	bool TryGetWeaponToInventory(FWeaponSlot NewWeapon, bool &BPWeaponIsInInventory);
 	UFUNCTION(BlueprintCallable, Category = "PickUpItems")
-	bool TryGetWeaponToInventory(FWeaponSlot NewWeapon);
+	bool PickUpWeapon(FWeaponSlot NewWeapon, int32 WeaponIndexToChange, int32 CurrentWeaponIndex, FDropItem &DropItemInfo);
 	UFUNCTION(BlueprintCallable, Category = "PickUpItems")
 	bool GetDropItemFropInventory(int32 WeaponIndexToDrop, FDropItem &DropItemInfo);
 };
