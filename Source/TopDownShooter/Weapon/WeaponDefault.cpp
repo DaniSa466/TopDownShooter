@@ -198,8 +198,8 @@ void AWeaponDefault::Fire()
 		AdditionalWeaponInfo.Round--;
 		ChangeDispersionByShoot();
 
-		if (AnimToPlay)
-			OnWeaponFire.Broadcast(AnimToPlay);
+		//if (AnimToPlay)
+		OnWeaponFire.Broadcast(AnimToPlay);
 
 		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), WeaponSettings.SoundFireWeapon, ShootLocation->GetComponentLocation());
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), WeaponSettings.EffectFireWeapon, ShootLocation->GetComponentTransform());
