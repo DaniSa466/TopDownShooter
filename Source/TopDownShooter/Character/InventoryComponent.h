@@ -51,7 +51,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapons")
 	int32 MaxSlotsWeapon = 0;
 
-	bool SwitchWeaponToIndex(int8 NewIndex, int8 OldIndex, FAdditionalWeaponInfo OldInfo, bool bIsForward);
+	bool SwitchWeaponToIndex(int8 OldIndex, FAdditionalWeaponInfo OldInfo, bool bIsForward);
 	bool CheckAmmoForWeapon(EWeaponType WeaponType, int16 &AvialableAmmoForWeapon);
 
 	FAdditionalWeaponInfo GetAdditionalWeaponInfo(int8 WeaponIndex);

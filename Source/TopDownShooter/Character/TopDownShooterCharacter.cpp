@@ -443,10 +443,7 @@ void ATopDownShooterCharacter::SwitchNextWeapon()
 				CurrentWeapon->CancelReload();
 		}
 
-		if (InventoryComponent)
-		{
-			InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon + 1, CurrentIndexWeapon, OldInfo, true);
-		}
+		InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon, OldInfo, true);
 	}
 }
 
@@ -454,7 +451,6 @@ void ATopDownShooterCharacter::SwitchPreviousWeapon()
 {
 	if (InventoryComponent->WeaponSlots.Num() > 1)
 	{
-		int8 OldIndex = CurrentIndexWeapon;
 		FAdditionalWeaponInfo OldInfo;
 
 		if (CurrentWeapon)
@@ -464,9 +460,6 @@ void ATopDownShooterCharacter::SwitchPreviousWeapon()
 				CurrentWeapon->CancelReload();
 		}
 
-		if (InventoryComponent)
-		{
-			InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon - 1, OldIndex, OldInfo, false);
-		}
+		InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon, OldInfo, false);
 	}
 }
