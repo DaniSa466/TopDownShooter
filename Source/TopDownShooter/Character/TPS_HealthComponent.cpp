@@ -36,18 +36,24 @@ float UTPS_HealthComponent::GetCurrentHealth()
 	return health;
 }
 
-void UTPS_HealthComponent::ReceveDamage(float damage)
+void UTPS_HealthComponent::SetCurrentHealth(float SetHealth)
 {
-	health -= damage;
-
-	if (health <= 0.0f)
-		DeadEvent_BP();
-
-	OnHealthChange.Broadcast(health);
+	health = SetHealth;
 }
 
-void UTPS_HealthComponent::DeadEvent_BP_Implementation()
+void UTPS_HealthComponent::ChangeCurrentHealth(float ChangeValue)
 {
-	//BP
-}
+	health += ChangeValue;
+	OnHealthChange.Broadcast(health, ChangeValue);
 
+	if (health > 100.f)
+		health = 100.f;
+	else
+	{
+
+		if (health <= 0.0f)
+		{
+			OnDead.Broadcast();
+		}
+	}
+}

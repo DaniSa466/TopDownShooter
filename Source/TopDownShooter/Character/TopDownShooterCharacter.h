@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InventoryComponent.h"
+#include "TPS_CharHealthComponent.h"
 #include "TopDownShooter/FuncLibrary/Types.h"
 #include "TopDownShooter/Weapon/WeaponDefault.h"
 #include "TopDownShooterCharacter.generated.h"
@@ -32,6 +33,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UInventoryComponent* InventoryComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class UTPS_CharHealthComponent* HealthComponent;
 
 private:
 	/** Top down camera */
@@ -91,6 +95,14 @@ public:
 	FVector LookingDirection;
 
 	FVector MovingDirection;
+
+	//Health variables
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	bool IsAlive = true;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+	TArray<UAnimMontage*> DeadAnimation;
+
+	FTimerHandle RagDollTimer;
 
 	//weapon
 	AWeaponDefault* CurrentWeapon = nullptr;
@@ -171,4 +183,11 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 	int32 CurrentIndexWeapon = 0;
+
+	//Health functions
+	UFUNCTION()
+	void CharDead();
+	void EnableRagDoll();
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, 
+		class AController* EventInstigator, AActor* DamageCauser) override;
 };

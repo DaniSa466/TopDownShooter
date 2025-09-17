@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "TopDownShooterCharacter.h"
 #include "TopDownShooter/FuncLibrary/Types.h"
 #include "InventoryComponent.generated.h"
 
@@ -75,5 +76,5 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PickUpItems")
 	bool PickUpWeapon(FWeaponSlot NewWeapon, int32 WeaponIndexToChange, int32 CurrentWeaponIndex, FDropItem &DropItemInfo);
 	UFUNCTION(BlueprintCallable, Category = "PickUpItems")
-	bool GetDropItemFropInventory(int32 WeaponIndexToDrop, FDropItem &DropItemInfo);
+	bool GetDropItemFromInventory(int32 WeaponIndexToDrop, FDropItem &DropItemInfo);
 };

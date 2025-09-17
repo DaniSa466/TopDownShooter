@@ -5,7 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 
-int32 DebugExplosionShow = 0;
+int32 DebugExplosionShow = 1;
 FAutoConsoleVariableRef CVARExplodeShow(
 	TEXT("TPS.DebugExplode"), DebugExplosionShow,
 	TEXT("Draw Debug For Explode"), ECVF_Cheat
@@ -67,7 +67,9 @@ void AProjectileDefault_Grenade::Explose()
 	UGameplayStatics::ApplyRadialDamageWithFalloff(GetWorld(),
 		ProjectileSetting.ExplodeMaxDamage, ProjectileSetting.ExplodeMaxDamage * 0.2f,
 		GetActorLocation(), 1000.f, 2000.f, 5,
-		NULL, IgnoreActor, nullptr, nullptr);
+		NULL, IgnoreActor, this, nullptr, ECC_Visibility);
+	UE_LOG(LogTemp, Warning, TEXT("AProjectileDefault_Grenade::Explose - MaxDamage = %f, MinDamage = %f"),
+		ProjectileSetting.ExplodeMaxDamage, ProjectileSetting.ExplodeMaxDamage * 0.2f);
 
 	this->Destroy();
 }

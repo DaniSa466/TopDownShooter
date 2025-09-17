@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "TPS_HealthComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChange, float, Health);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthChange, float, Health, float, damage);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDead);
 
 USTRUCT(BlueprintType)
@@ -40,9 +40,10 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	UFUNCTION(BlueprintCallable, Category = "Health")
 	float GetCurrentHealth();
 	UFUNCTION(BlueprintCallable, Category = "Health")
-	void ReceveDamage(float damage);
-	UFUNCTION(BlueprintNativeEvent)
-	void DeadEvent_BP();
+	void SetCurrentHealth(float SetHealth);
+	UFUNCTION(BlueprintCallable, Category = "Health")
+	virtual void ChangeCurrentHealth(float ChangeValue);
 };

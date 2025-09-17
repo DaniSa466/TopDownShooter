@@ -303,15 +303,17 @@ bool UInventoryComponent::CheckCanTakeWeapon(int32 &FreeSlot)
 bool UInventoryComponent::PickUpWeapon(FWeaponSlot NewWeapon, int32 WeaponIndexToChange, int32 CurrentWeaponIndex, FDropItem &DropItemInfo)
 {
 	bool result = false;
-	if (GetDropItemFropInventory(WeaponIndexToChange, DropItemInfo))
+	if (GetDropItemFromInventory(WeaponIndexToChange, DropItemInfo))
 	{
 		WeaponSlots[WeaponIndexToChange] = NewWeapon;
 
-		SwitchWeaponToIndex(-1, NewWeapon.AdditionalInfo, false);
+		SwitchWeaponToIndex(CurrentWeaponIndex, NewWeapon.AdditionalInfo, false);
 		OnUpdateWeaponSlots.Broadcast(WeaponIndexToChange, NewWeapon);
 
 		result = true;
 	}
+	//UE_LOG(LogTemp, Warning, TEXT("InventoryComponent::PickUpWeapon - SlotToChange = %f. Name = %f. Round = %f."), WeaponIndexToChange, NewWeapon.NameItem, NewWeapon.AdditionalInfo.Round);
+
 	return result;
 }
 
@@ -341,7 +343,7 @@ bool UInventoryComponent::TryGetWeaponToInventory(FWeaponSlot NewWeapon, bool &B
 	return CanTake;
 }
 
-bool UInventoryComponent::GetDropItemFropInventory(int32 WeaponIndexToDrop, FDropItem &DropItemInfo)
+bool UInventoryComponent::GetDropItemFromInventory(int32 WeaponIndexToDrop, FDropItem &DropItemInfo)
 {
 	bool result = false;
 	if (WeaponSlots.IsValidIndex(WeaponIndexToDrop))

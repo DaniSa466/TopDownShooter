@@ -12,6 +12,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "InventoryComponent.h"
+#include "TopDownShooter/Game/TopDownShooterPlayerController.h"
 #include "TopDownShooter/Game/TopDownShooterGameInstance.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
@@ -46,9 +47,13 @@ ATopDownShooterCharacter::ATopDownShooterCharacter()
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+	HealthComponent = CreateDefaultSubobject<UTPS_CharHealthComponent>(TEXT("HealthComponent"));
 
 	if (InventoryComponent)
 		InventoryComponent->OnSwitchWeapon.AddDynamic(this, &ATopDownShooterCharacter::InitWeapon);
+
+	if (HealthComponent)
+		HealthComponent->OnDead.AddDynamic(this, &ATopDownShooterCharacter::CharDead);
 
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
@@ -145,57 +150,60 @@ void ATopDownShooterCharacter::AttackCharEvent(bool bIsFiring)
 
 void ATopDownShooterCharacter::MovementTick(float DeltaTime)
 {
-	AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
-	AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
-		
-	APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-
-	if (MyController)
+	if (IsAlive)
 	{
-		FHitResult ResultHit;
-		MyController->GetHitResultUnderCursor(ECC_GameTraceChannel1, true, ResultHit);
+		AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
+		AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
 
-		float FindRotatorResultYaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ResultHit.Location).Yaw;
-		SetActorRotation(FQuat(FRotator(0.0f, FindRotatorResultYaw, 0.0f)));
+		APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+		if (MyController)
+		{
+			FHitResult ResultHit;
+			MyController->GetHitResultUnderCursor(ECC_GameTraceChannel1, true, ResultHit);
+
+			float FindRotatorResultYaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ResultHit.Location).Yaw;
+			SetActorRotation(FQuat(FRotator(0.0f, FindRotatorResultYaw, 0.0f)));
+
+			if (CurrentWeapon)
+			{
+				FVector Displacement = FVector(0);
+				switch (MovementState)
+				{
+				case EMovementState::Stand_State:
+					Displacement = FVector(0.f, 0.f, 120.f);
+					break;
+				case EMovementState::AimStand_State:
+					Displacement = FVector(0.f, 0.f, 160.f);
+					break;
+				case EMovementState::Aim_State:
+					Displacement = FVector(0.f, 0.f, 160.f);
+					break;
+				case EMovementState::AimWalk_State:
+					Displacement = FVector(0.f, 0.f, 160.f);
+					break;
+				case EMovementState::Walk_State:
+					Displacement = FVector(0.f, 0.f, 120.f);
+					break;
+				case EMovementState::Run_State:
+					Displacement = FVector(0.f, 0.f, 120.f);
+					break;
+				case EMovementState::SprintRun_State:
+					break;
+				default:
+					break;
+				}
+
+				CurrentWeapon->ShootEndLocation = ResultHit.Location + Displacement;
+			}
+		}
 
 		if (CurrentWeapon)
-		{
-			FVector Displacement = FVector(0);
-			switch (MovementState)
-			{
-			case EMovementState::Stand_State:
-				Displacement = FVector(0.f, 0.f, 120.f);
-				break;
-			case EMovementState::AimStand_State:
-				Displacement = FVector(0.f, 0.f, 160.f);
-				break;
-			case EMovementState::Aim_State:
-				Displacement = FVector(0.f, 0.f, 160.f);
-				break;
-			case EMovementState::AimWalk_State:
-				Displacement = FVector(0.f, 0.f, 160.f);
-				break;
-			case EMovementState::Walk_State:
-				Displacement = FVector(0.f, 0.f, 120.f);
-				break;
-			case EMovementState::Run_State:
-				Displacement = FVector(0.f, 0.f, 120.f);
-				break;
-			case EMovementState::SprintRun_State:
-				break;
-			default:
-				break;
-			}
-
-			CurrentWeapon->ShootEndLocation = ResultHit.Location + Displacement;
-		}
+			if (FMath::IsNearlyZero(GetVelocity().Size(), 0.5f))
+				CurrentWeapon->ShouldReduceDispersion = true;
+			else
+				CurrentWeapon->ShouldReduceDispersion = false;
 	}
-
-	if (CurrentWeapon)
-		if (FMath::IsNearlyZero(GetVelocity().Size(), 0.5f))
-			CurrentWeapon->ShouldReduceDispersion = true;
-		else
-			CurrentWeapon->ShouldReduceDispersion = false;
 }
 
 void ATopDownShooterCharacter::CharacterUpdate()
@@ -462,4 +470,42 @@ void ATopDownShooterCharacter::SwitchPreviousWeapon()
 
 		InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon, OldInfo, false);
 	}
+}
+
+void ATopDownShooterCharacter::CharDead()
+{
+	float AnimTime = 0.0f;
+	int8 AnimNum = FMath::RandHelper(DeadAnimation.Num());
+	
+	if (DeadAnimation[AnimNum] && DeadAnimation.IsValidIndex(AnimNum) && GetMesh()->GetAnimInstance())
+	{
+		AnimTime = DeadAnimation[AnimNum]->GetPlayLength();
+		GetMesh()->GetAnimInstance()->Montage_Play(DeadAnimation[AnimNum]);
+	}
+	
+	IsAlive = false;
+	UnPossessed();
+	
+	GetWorldTimerManager().SetTimer(RagDollTimer, this, &ATopDownShooterCharacter::EnableRagDoll, AnimTime, false);
+}
+
+void ATopDownShooterCharacter::EnableRagDoll()
+{
+	UE_LOG(LogTemp, Warning, TEXT("ATPS_Character::EnableRagDoll executes."));
+
+	if (GetMesh())
+	{
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+		GetMesh()->SetSimulatePhysics(true);
+	}
+}
+
+float ATopDownShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	if (IsAlive)
+		HealthComponent->ChangeCurrentHealth(-DamageAmount);
+
+	return ActualDamage;
 }

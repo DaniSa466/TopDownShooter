@@ -85,6 +85,7 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp,
 	if (OtherActor && Hit.PhysMaterial.IsValid())
 	{
 		EPhysicalSurface MySurfaceType = UGameplayStatics::GetSurfaceType(Hit);
+		//UE_LOG(LogTemp, Warning, TEXT("AProjectileDefault::BulletCollisionSphereHit - first condition met"));
 
 		if (ProjectileSetting.HitDecals.Contains(MySurfaceType))
 		{
