@@ -345,12 +345,12 @@ bool UInventoryComponent::TryGetWeaponToInventory(FWeaponSlot NewWeapon, bool &B
 
 bool UInventoryComponent::GetDropItemFromInventory(int32 WeaponIndexToDrop, FDropItem &DropItemInfo)
 {
-	bool result = false;
-	if (WeaponSlots.IsValidIndex(WeaponIndexToDrop))
-		result = true;
+	bool result;
+	result = WeaponSlots.IsValidIndex(WeaponIndexToDrop);
 
 	bool bCanDrop = false;
 	FName DropItemName = GetWeaponNameByIndexSlot(WeaponIndexToDrop);
+	DropItemInfo.WeaponInfo.NameItem = DropItemName;
 
 	UTopDownShooterGameInstance* myGI = Cast<UTopDownShooterGameInstance>(GetWorld()->GetGameInstance());
 	if (myGI)

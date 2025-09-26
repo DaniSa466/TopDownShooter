@@ -487,6 +487,7 @@ void ATopDownShooterCharacter::CharDead()
 	UnPossessed();
 	
 	GetWorldTimerManager().SetTimer(RagDollTimer, this, &ATopDownShooterCharacter::EnableRagDoll, AnimTime, false);
+	GetCursorToWorld()->SetVisibility(false);
 }
 
 void ATopDownShooterCharacter::EnableRagDoll()

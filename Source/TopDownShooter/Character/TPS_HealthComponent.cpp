@@ -43,6 +43,8 @@ void UTPS_HealthComponent::SetCurrentHealth(float SetHealth)
 
 void UTPS_HealthComponent::ChangeCurrentHealth(float ChangeValue)
 {
+	ChangeValue *= DamageCoef;
+
 	health += ChangeValue;
 	OnHealthChange.Broadcast(health, ChangeValue);
 
