@@ -49,7 +49,7 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	// ...
 }
 
-bool UInventoryComponent::SwitchWeaponToIndex(int8 OldIndex, FAdditionalWeaponInfo OldInfo, bool bIsForward)
+bool UInventoryComponent::SwitchWeaponToIndex(int8 OldIndex, FAdditionalWeaponInfo OldInfo, bool bIsForward, bool CalledFromPickUp)
 {
 	bool SwitchIsSuccess = false;
 	int8 NewIndex = OldIndex;
@@ -136,6 +136,12 @@ bool UInventoryComponent::SwitchWeaponToIndex(int8 OldIndex, FAdditionalWeaponIn
 				}
 			i++;
 		}
+	}
+
+	if (CalledFromPickUp)
+	{ 
+		if (ATopDownShooterCharacter* InventoryPointerToCharacter = Cast<ATopDownShooterCharacter>(GetOwner()))
+			NewIndex = InventoryPointerToCharacter->CurrentIndexWeapon;
 	}
 
 	if (SwitchIsSuccess)
@@ -307,7 +313,7 @@ bool UInventoryComponent::PickUpWeapon(FWeaponSlot NewWeapon, int32 WeaponIndexT
 	{
 		WeaponSlots[WeaponIndexToChange] = NewWeapon;
 
-		SwitchWeaponToIndex(CurrentWeaponIndex, NewWeapon.AdditionalInfo, false);
+		SwitchWeaponToIndex(WeaponIndexToChange, NewWeapon.AdditionalInfo, false, true);
 		OnUpdateWeaponSlots.Broadcast(WeaponIndexToChange, NewWeapon);
 
 		result = true;

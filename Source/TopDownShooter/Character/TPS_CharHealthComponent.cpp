@@ -7,7 +7,7 @@ void UTPS_CharHealthComponent::ChangeCurrentHealth(float ChangeValue)
 {
 	float DamageOnShield = ChangeValue * DamageCoef;
 
-	if (shield > 0.0f)
+	if (shield > 0.0f && ChangeValue < 0.f)
 	{
 		ChangeShieldStrenght(DamageOnShield);
 		
@@ -22,7 +22,6 @@ void UTPS_CharHealthComponent::ChangeCurrentHealth(float ChangeValue)
 void UTPS_CharHealthComponent::ChangeShieldStrenght(float ChangeValue)
 {
 	shield += ChangeValue;
-	OnShieldChangeStrenght.Broadcast(shield, ChangeValue);
 
 	if (shield > 100.f)
 		shield = 100.f;
@@ -38,6 +37,8 @@ void UTPS_CharHealthComponent::ChangeShieldStrenght(float ChangeValue)
 
 		GetWorld()->GetTimerManager().ClearTimer(TimerHandle_ShieldRecoveryRateTimer);
 	}
+
+	OnShieldChangeStrenght.Broadcast(shield, ChangeValue);
 }
 
 float UTPS_CharHealthComponent::GetShieldStrenght()

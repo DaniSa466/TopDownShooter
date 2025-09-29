@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "TopDownShooterCharacter.h"
 #include "TopDownShooter/FuncLibrary/Types.h"
+#include "TopDownShooterCharacter.h"
 #include "InventoryComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnSwitchWeapon, FName, IdWeaponName, FAdditionalWeaponInfo, AdditionalWeaponInfo, int32, NewCurrentIndexWeapon);
@@ -52,7 +52,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapons")
 	int32 MaxSlotsWeapon = 0;
 
-	bool SwitchWeaponToIndex(int8 OldIndex, FAdditionalWeaponInfo OldInfo, bool bIsForward);
+	//last variable is added correct working because without it
+	//function switches weapon if player just picked up another
+	bool SwitchWeaponToIndex(int8 OldIndex, FAdditionalWeaponInfo OldInfo, 
+		bool bIsForward, bool CalledFromPickUp = false);
 	bool CheckAmmoForWeapon(EWeaponType WeaponType, int16 &AvialableAmmoForWeapon);
 
 	FAdditionalWeaponInfo GetAdditionalWeaponInfo(int8 WeaponIndex);
