@@ -66,5 +66,5 @@ void UTPS_CharHealthComponent::RecoveryShield()
 	else
 		shield = ShieldValueInNextStep;
 
-	OnShieldChangeStrenght.Broadcast(shield, -ShieldRecoveryValue);
+	OnShieldChangeStrenght.Broadcast(shield, ShieldRecoveryValue);
 }
