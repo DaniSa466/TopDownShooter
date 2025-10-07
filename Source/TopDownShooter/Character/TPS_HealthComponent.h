@@ -34,7 +34,7 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	float health = 100.f;
+	float HealthValue = 100.f;
 
 public:	
 	// Called every frame

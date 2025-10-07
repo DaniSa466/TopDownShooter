@@ -33,27 +33,27 @@ void UTPS_HealthComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 
 float UTPS_HealthComponent::GetCurrentHealth()
 {
-	return health;
+	return HealthValue;
 }
 
 void UTPS_HealthComponent::SetCurrentHealth(float SetHealth)
 {
-	health = SetHealth;
+	HealthValue = SetHealth;
 }
 
 void UTPS_HealthComponent::ChangeCurrentHealth(float ChangeValue)
 {
 	ChangeValue *= DamageCoef;
 
-	health += ChangeValue;
-	OnHealthChange.Broadcast(health, ChangeValue);
+	HealthValue += ChangeValue;
+	OnHealthChange.Broadcast(HealthValue, ChangeValue);
 
-	if (health > 100.f)
-		health = 100.f;
+	if (HealthValue > 100.f)
+		HealthValue = 100.f;
 	else
 	{
 
-		if (health <= 0.0f)
+		if (HealthValue <= 0.0f)
 		{
 			OnDead.Broadcast();
 		}

@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/StaticMeshActor.h"
 #include "TopDownShooter/Character/InventoryComponent.h"
+#include "TopDownShooter/StateEffects/TPS_StatsEffects.h"
 
 // Sets default values
 AWeaponDefault::AWeaponDefault()
@@ -282,9 +283,14 @@ void AWeaponDefault::Fire()
 							UGameplayStatics::PlaySoundAtLocation(GetWorld(), 
 								WeaponSettings.ProjectileSetting.HitSound, Hit.ImpactPoint);
 
-						UGameplayStatics::ApplyDamage(Hit.GetActor(), 
+						UTPS_StatsEffects* NewEffect = NewObject<UTPS_StatsEffects>(Hit.GetActor(), FName("Effect"));
+
+						UGameplayStatics::ApplyPointDamage(Hit.GetActor(),
+							WeaponSettings.ProjectileSetting.ProjectileDamage,
+							Hit.TraceStart, Hit, GetInstigatorController(), this, NULL);
+						/*UGameplayStatics::ApplyDamage(Hit.GetActor(),
 							WeaponSettings.ProjectileSetting.ProjectileDamage, 
-							GetInstigatorController(), this, NULL);
+							GetInstigatorController(), this, NULL);*/
 					}
 				}
 			}

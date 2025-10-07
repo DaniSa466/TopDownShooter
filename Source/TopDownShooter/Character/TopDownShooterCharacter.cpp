@@ -472,6 +472,13 @@ void ATopDownShooterCharacter::SwitchPreviousWeapon()
 	}
 }
 
+bool ATopDownShooterCharacter::AvialableForEffects_Implementation()
+{
+	UE_LOG(LogTemp, Warning, TEXT("ATopDownShooterCharacte::AvialableForEffects_Implementation"));
+
+	return true;
+}
+
 void ATopDownShooterCharacter::CharDead()
 {
 	float AnimTime = 0.0f;

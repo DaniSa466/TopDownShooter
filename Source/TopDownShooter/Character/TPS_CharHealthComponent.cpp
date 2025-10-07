@@ -7,43 +7,52 @@ void UTPS_CharHealthComponent::ChangeCurrentHealth(float ChangeValue)
 {
 	float DamageOnShield = ChangeValue * DamageCoef;
 
-	if (shield > 0.0f && ChangeValue < 0.f)
-	{
+	if (ShieldStrenghtVar > 0.0f && ChangeValue < 0.f)
 		ChangeShieldStrenght(DamageOnShield);
-		
-		if (shield <= 0.0f)
-			UE_LOG(LogTemp, Warning, TEXT("TPS_CharHealthComponent::ChangeCurrentHealth - shield is broken"))
-	}
-
+	
 	else
 		Super::ChangeCurrentHealth(ChangeValue);
 }
 
 void UTPS_CharHealthComponent::ChangeShieldStrenght(float ChangeValue)
 {
-	shield += ChangeValue;
+	ShieldStrenghtVar += ChangeValue;
 
-	if (shield > 100.f)
-		shield = 100.f;
+	if (ShieldStrenghtVar > MaxShieldStrenght)
+		ShieldStrenghtVar = MaxShieldStrenght;
 	else
-		if (shield <= 0.0f)
-			shield = 0.0f;
+		if (ShieldStrenghtVar <= 0.0f)
+			ShieldStrenghtVar = 0.0f;
 
-	if (GetWorld())
+	OnShieldChangeStrenght.Broadcast(ShieldStrenghtVar, ChangeValue);
+
+	if (ShieldStrenghtVar == 0.0f)
 	{
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle_CoolDownShieldTimer,
-			this, &UTPS_CharHealthComponent::ShieldCoolDownEnd, 
-			CoolDownShieldRecoveryTime, false);
+		OnShieldBroken.Broadcast();
 
-		GetWorld()->GetTimerManager().ClearTimer(TimerHandle_ShieldRecoveryRateTimer);
+		if (GetWorld())
+		{
+			GetWorld()->GetTimerManager().ClearTimer(TimerHandle_ShieldRecoveryRateTimer);
+
+			GetWorld()->GetTimerManager().SetTimer(TimerHandle_CoolDownShieldTimer,
+				this, &UTPS_CharHealthComponent::ShieldCoolDownEnd,
+				CoolDownShieldIsBrokenRecoveryTime, false);
+		}
 	}
+	else
+		if (GetWorld())
+		{
+			GetWorld()->GetTimerManager().ClearTimer(TimerHandle_ShieldRecoveryRateTimer);
 
-	OnShieldChangeStrenght.Broadcast(shield, ChangeValue);
+			GetWorld()->GetTimerManager().SetTimer(TimerHandle_CoolDownShieldTimer,
+				this, &UTPS_CharHealthComponent::ShieldCoolDownEnd,
+				CoolDownShieldRecoveryTime, false);
+		}
 }
 
 float UTPS_CharHealthComponent::GetShieldStrenght()
 {
-	return shield;
+	return ShieldStrenghtVar;
 }
 
 void UTPS_CharHealthComponent::ShieldCoolDownEnd()
@@ -56,15 +65,15 @@ void UTPS_CharHealthComponent::ShieldCoolDownEnd()
 
 void UTPS_CharHealthComponent::RecoveryShield()
 {
-	float ShieldValueInNextStep = shield + ShieldRecoveryValue;
+	float ShieldValueInNextStep = ShieldStrenghtVar + ShieldRecoveryValue;
 
-	if (ShieldValueInNextStep > 100.f)
+	if (ShieldValueInNextStep > MaxShieldStrenght)
 	{ 
-		shield = 100.f;
 		GetWorld()->GetTimerManager().ClearTimer(TimerHandle_ShieldRecoveryRateTimer);
+		OnShieldRecovered.Broadcast();
 	}
 	else
-		shield = ShieldValueInNextStep;
+		ShieldStrenghtVar = ShieldValueInNextStep;
 
-	OnShieldChangeStrenght.Broadcast(shield, ShieldRecoveryValue);
+	OnShieldChangeStrenght.Broadcast(ShieldStrenghtVar, ShieldRecoveryValue);
 }

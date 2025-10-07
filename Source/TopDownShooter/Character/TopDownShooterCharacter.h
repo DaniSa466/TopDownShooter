@@ -8,10 +8,11 @@
 #include "TPS_CharHealthComponent.h"
 #include "TopDownShooter/FuncLibrary/Types.h"
 #include "TopDownShooter/Weapon/WeaponDefault.h"
+#include "TopDownShooter/Game/TPS_GameActorsInterface.h"
 #include "TopDownShooterCharacter.generated.h"
 
 UCLASS(Blueprintable)
-class ATopDownShooterCharacter : public ACharacter
+class ATopDownShooterCharacter : public ACharacter, public ITPS_GameActorsInterface
 {
 	GENERATED_BODY()
 
@@ -183,6 +184,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 	int32 CurrentIndexWeapon = 0;
+
+	//Interface
+	bool AvialableForEffects_Implementation() override;
 
 	//Health functions
 	UFUNCTION()
