@@ -33,6 +33,7 @@ protected:
 	float MaxShieldStrenght = 100.f;
 
 public:
+	//variables for Shield Recoverying logic
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sheild")
 	float CoolDownShieldIsBrokenRecoveryTime = 10.f;
 
@@ -44,6 +45,16 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sheild")
 	float ShieldRecoveryRate = 0.1f;
+
+	//sounds
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SheildSounds")
+	USoundBase* BreakShieldSound = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SheildSounds")
+	USoundBase* ShieldRecoveryingSound = nullptr;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SheildSounds")
+	USoundBase* ShieldIsRecoveredSound = nullptr;
 
 	void ChangeCurrentHealth(float ChangeValue) override;
 

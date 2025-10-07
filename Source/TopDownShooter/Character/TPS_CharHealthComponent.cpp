@@ -2,6 +2,7 @@
 
 
 #include "TPS_CharHealthComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 void UTPS_CharHealthComponent::ChangeCurrentHealth(float ChangeValue)
 {
@@ -29,6 +30,9 @@ void UTPS_CharHealthComponent::ChangeShieldStrenght(float ChangeValue)
 	if (ShieldStrenghtVar == 0.0f)
 	{
 		OnShieldBroken.Broadcast();
+
+		UGameplayStatics::PlaySoundAtLocation(this, BreakShieldSound, 
+			GetOwner()->GetActorLocation());
 
 		if (GetWorld())
 		{
@@ -58,9 +62,14 @@ float UTPS_CharHealthComponent::GetShieldStrenght()
 void UTPS_CharHealthComponent::ShieldCoolDownEnd()
 {
 	if (GetWorld())
+	{
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle_ShieldRecoveryRateTimer,
-			this, &UTPS_CharHealthComponent::RecoveryShield, 
+			this, &UTPS_CharHealthComponent::RecoveryShield,
 			ShieldRecoveryRate, true);
+
+		UGameplayStatics::PlaySoundAtLocation(this, ShieldRecoveryingSound, 
+			GetOwner()->GetActorLocation(), 3.5f);
+	}
 }
 
 void UTPS_CharHealthComponent::RecoveryShield()
@@ -70,6 +79,9 @@ void UTPS_CharHealthComponent::RecoveryShield()
 	if (ShieldValueInNextStep > MaxShieldStrenght)
 	{ 
 		GetWorld()->GetTimerManager().ClearTimer(TimerHandle_ShieldRecoveryRateTimer);
+
+		UGameplayStatics::PlaySoundAtLocation(this, ShieldIsRecoveredSound, GetOwner()->GetActorLocation(), 2.f, 1.f, 0.7f);
+
 		OnShieldRecovered.Broadcast();
 	}
 	else
