@@ -1,5 +1,6 @@
 #include "ProjectileDefault.h"
 #include "Kismet/GameplayStatics.h"
+#include "TopDownShooter/Game/TPS_GameActorsInterface.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 
 // Sets default values
@@ -109,6 +110,8 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp,
 
 		if (ProjectileSetting.HitSound)
 			UGameplayStatics::PlaySoundAtLocation(GetWorld(), ProjectileSetting.HitSound, Hit.ImpactPoint);
+
+		UTypes::AddEffectBySurfaceType(Hit.GetActor(), ProjectileSetting.Effect, MySurfaceType);
 	}
 
 	UGameplayStatics::ApplyDamage(OtherActor, ProjectileSetting.ProjectileDamage, GetInstigatorController(), this, NULL);

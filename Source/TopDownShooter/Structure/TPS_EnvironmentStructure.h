@@ -24,6 +24,5 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	bool AvialableForEffects_Implementation();
-	bool AvialableForEffectsOnlyCPP() override;
+	EPhysicalSurface GetSurfaceType() override;
 };

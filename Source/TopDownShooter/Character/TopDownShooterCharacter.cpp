@@ -14,7 +14,9 @@
 #include "InventoryComponent.h"
 #include "TopDownShooter/Game/TopDownShooterPlayerController.h"
 #include "TopDownShooter/Game/TopDownShooterGameInstance.h"
+#include "TopDownShooter/Weapon/ProjectileDefault.h"
 #include "Materials/Material.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Engine/World.h"
 
 ATopDownShooterCharacter::ATopDownShooterCharacter()
@@ -472,11 +474,21 @@ void ATopDownShooterCharacter::SwitchPreviousWeapon()
 	}
 }
 
-bool ATopDownShooterCharacter::AvialableForEffects_Implementation()
+EPhysicalSurface ATopDownShooterCharacter::GetSurfaceType()
 {
-	UE_LOG(LogTemp, Warning, TEXT("ATopDownShooterCharacte::AvialableForEffects_Implementation"));
+	EPhysicalSurface result = EPhysicalSurface::SurfaceType_Default;
 
-	return true;
+	if (HealthComponent)
+		if (HealthComponent->GetShieldStrenght() <= 0)
+			if (GetMesh())
+			{
+				UMaterialInterface* myMaterial = GetMesh()->GetMaterial(0);
+
+				if (myMaterial)
+					result = myMaterial->GetPhysicalMaterial()->SurfaceType;
+			}
+
+	return result;
 }
 
 void ATopDownShooterCharacter::CharDead()
@@ -514,6 +526,15 @@ float ATopDownShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent cons
 
 	if (IsAlive)
 		HealthComponent->ChangeCurrentHealth(-DamageAmount);
+
+	if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID))
+	{
+		AProjectileDefault* MyProjectile = Cast<AProjectileDefault>(DamageCauser);
+		if (MyProjectile)
+		{
+			UTypes::AddEffectBySurfaceType(this, MyProjectile->ProjectileSetting.Effect, GetSurfaceType());
+		}
+	}
 
 	return ActualDamage;
 }

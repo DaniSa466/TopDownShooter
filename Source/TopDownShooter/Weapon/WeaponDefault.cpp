@@ -6,6 +6,7 @@
 #include "Engine/StaticMeshActor.h"
 #include "TopDownShooter/Character/InventoryComponent.h"
 #include "TopDownShooter/StateEffects/TPS_StatsEffects.h"
+#include "TopDownShooter/Game/TPS_GameActorsInterface.h"
 
 // Sets default values
 AWeaponDefault::AWeaponDefault()
@@ -257,11 +258,11 @@ void AWeaponDefault::Fire()
 
 					if (Hit.GetActor() && Hit.PhysMaterial.IsValid())
 					{
-						EPhysicalSurface MySurfaceType = UGameplayStatics::GetSurfaceType(Hit);
+						EPhysicalSurface mySurfaceType = UGameplayStatics::GetSurfaceType(Hit);
 
-						if (WeaponSettings.ProjectileSetting.HitDecals.Contains(MySurfaceType))
+						if (WeaponSettings.ProjectileSetting.HitDecals.Contains(mySurfaceType))
 						{
-							UMaterialInterface* myMaterial = WeaponSettings.ProjectileSetting.HitDecals[MySurfaceType];
+							UMaterialInterface* myMaterial = WeaponSettings.ProjectileSetting.HitDecals[mySurfaceType];
 
 							if (myMaterial && Hit.GetComponent())
 								UGameplayStatics::SpawnDecalAttached(myMaterial, FVector(20.f),
@@ -269,9 +270,9 @@ void AWeaponDefault::Fire()
 									EAttachLocation::KeepWorldPosition, 10.f);
 						}
 
-						if (WeaponSettings.ProjectileSetting.HitFXs.Contains(MySurfaceType))
+						if (WeaponSettings.ProjectileSetting.HitFXs.Contains(mySurfaceType))
 						{
-							UParticleSystem* myParticle = WeaponSettings.ProjectileSetting.HitFXs[MySurfaceType];
+							UParticleSystem* myParticle = WeaponSettings.ProjectileSetting.HitFXs[mySurfaceType];
 
 							if (myParticle)
 								UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),
@@ -283,14 +284,11 @@ void AWeaponDefault::Fire()
 							UGameplayStatics::PlaySoundAtLocation(GetWorld(), 
 								WeaponSettings.ProjectileSetting.HitSound, Hit.ImpactPoint);
 
-						UTPS_StatsEffects* NewEffect = NewObject<UTPS_StatsEffects>(Hit.GetActor(), FName("Effect"));
+						UTypes::AddEffectBySurfaceType(Hit.GetActor(), ProjectileInfo.Effect, mySurfaceType);
 
 						UGameplayStatics::ApplyPointDamage(Hit.GetActor(),
 							WeaponSettings.ProjectileSetting.ProjectileDamage,
 							Hit.TraceStart, Hit, GetInstigatorController(), this, NULL);
-						/*UGameplayStatics::ApplyDamage(Hit.GetActor(),
-							WeaponSettings.ProjectileSetting.ProjectileDamage, 
-							GetInstigatorController(), this, NULL);*/
 					}
 				}
 			}

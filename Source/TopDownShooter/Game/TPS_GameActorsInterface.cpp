@@ -5,7 +5,7 @@
 
 // Add default functionality here for any ITPS_GameActorsInterface functions that are not pure virtual.
 
-bool ITPS_GameActorsInterface::AvialableForEffectsOnlyCPP()
+EPhysicalSurface ITPS_GameActorsInterface::GetSurfaceType()
 {
-	return true;
+	return EPhysicalSurface::SurfaceType_Default;
 }

@@ -2,6 +2,8 @@
 
 
 #include "TPS_EnvironmentStructure.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
+#include "Materials/MaterialInterface.h"
 
 // Sets default values
 ATPS_EnvironmentStructure::ATPS_EnvironmentStructure()
@@ -25,14 +27,19 @@ void ATPS_EnvironmentStructure::Tick(float DeltaTime)
 
 }
 
-bool ATPS_EnvironmentStructure::AvialableForEffects_Implementation()
+EPhysicalSurface ATPS_EnvironmentStructure::GetSurfaceType()
 {
-	UE_LOG(LogTemp, Warning, TEXT("ATPS_EnvironmentStructure::AvialableForEffects_Implementation"));
-	return true;
-}
+	EPhysicalSurface result = EPhysicalSurface::SurfaceType_Default;
+	UStaticMeshComponent* myMesh = Cast<UStaticMeshComponent>(GetComponentByClass(UStaticMeshComponent::StaticClass()));
+	if (myMesh)
+	{
+		UMaterialInterface* myMaterial = myMesh->GetMaterial(0);
 
-bool ATPS_EnvironmentStructure::AvialableForEffectsOnlyCPP()
-{
-	UE_LOG(LogTemp, Warning, TEXT("ATPS_EnvironmentStructure::AvialableForEffectsOnlyCPP"));
-	return false;
+		if (myMaterial)
+		{
+			result = myMaterial->GetPhysicalMaterial()->SurfaceType;
+		}
+	}
+
+	return result;
 }

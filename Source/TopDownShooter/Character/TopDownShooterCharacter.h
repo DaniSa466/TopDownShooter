@@ -186,7 +186,7 @@ public:
 	int32 CurrentIndexWeapon = 0;
 
 	//Interface
-	bool AvialableForEffects_Implementation() override;
+	EPhysicalSurface GetSurfaceType() override;
 
 	//Health functions
 	UFUNCTION()

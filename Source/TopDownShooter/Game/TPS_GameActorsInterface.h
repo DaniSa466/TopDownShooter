@@ -23,11 +23,5 @@ class TOPDOWNSHOOTER_API ITPS_GameActorsInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Event")
-	bool AvialableForEffectsBP();
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Event")
-	bool AvialableForEffects();
-
-	virtual bool AvialableForEffectsOnlyCPP();
+	virtual EPhysicalSurface GetSurfaceType();
 };
