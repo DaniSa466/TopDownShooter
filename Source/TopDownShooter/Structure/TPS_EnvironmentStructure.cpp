@@ -43,3 +43,20 @@ EPhysicalSurface ATPS_EnvironmentStructure::GetSurfaceType()
 
 	return result;
 }
+
+TArray<UTPS_StatsEffects*> ATPS_EnvironmentStructure::GetCurrentEffects()
+{
+	return Effects;
+}
+
+void ATPS_EnvironmentStructure::RemoveEffect(UTPS_StatsEffects* EffectToRemove)
+{
+	EffectToRemove->BeginDestroy();
+
+	Effects.Remove(EffectToRemove);
+}
+
+void ATPS_EnvironmentStructure::AddEffect(UTPS_StatsEffects* EffectToAdd)
+{
+	Effects.Add(EffectToAdd);
+}

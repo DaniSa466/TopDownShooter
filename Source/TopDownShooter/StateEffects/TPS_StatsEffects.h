@@ -23,6 +23,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	TArray <TEnumAsByte<EPhysicalSurface>> PossibleInteractSurface;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
+	bool bIsStackable = false;
+
 	AActor* NewActor = nullptr;
 };
 

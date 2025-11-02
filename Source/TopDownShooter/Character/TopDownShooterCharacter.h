@@ -9,6 +9,7 @@
 #include "TopDownShooter/FuncLibrary/Types.h"
 #include "TopDownShooter/Weapon/WeaponDefault.h"
 #include "TopDownShooter/Game/TPS_GameActorsInterface.h"
+#include "TopDownShooter/StateEffects/TPS_StatsEffects.h"
 #include "TopDownShooterCharacter.generated.h"
 
 UCLASS(Blueprintable)
@@ -101,7 +102,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
 	bool IsAlive = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
-	TArray<UAnimMontage*> DeadAnimation;
+	TArray<UAnimMontage*> DeadAnimations;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
+	TSubclassOf<UTPS_StatsEffects> AbilityEffect;
 
 	FTimerHandle RagDollTimer;
 
@@ -113,6 +116,10 @@ public:
 	FName InitWeaponName;
 
 	UDecalComponent* CurrentCursor = nullptr;
+
+	//Effect
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	TArray<UTPS_StatsEffects*> Effects;
 
 	//inputs
 	UFUNCTION()
@@ -182,11 +189,17 @@ public:
 	void SwitchNextWeapon();
 	void SwitchPreviousWeapon();
 
+	//ability
+	void TryAbilityEnabled();
+
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 	int32 CurrentIndexWeapon = 0;
 
 	//Interface
 	EPhysicalSurface GetSurfaceType() override;
+	TArray<UTPS_StatsEffects*> GetCurrentEffects() override;
+	void RemoveEffect(UTPS_StatsEffects* EffectToRemove) override;
+	void AddEffect(UTPS_StatsEffects* EffectToAdd) override;
 
 	//Health functions
 	UFUNCTION()

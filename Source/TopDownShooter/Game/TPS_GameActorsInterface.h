@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "TopDownShooter/StateEffects/TPS_StatsEffects.h"
 #include "TPS_GameActorsInterface.generated.h"
 
 // This class does not need to be modified.
@@ -24,4 +25,9 @@ class TOPDOWNSHOOTER_API ITPS_GameActorsInterface
 public:
 
 	virtual EPhysicalSurface GetSurfaceType();
+
+	virtual TArray<UTPS_StatsEffects*> GetCurrentEffects();
+
+	virtual void RemoveEffect(UTPS_StatsEffects* EffectToRemove);
+	virtual void AddEffect(UTPS_StatsEffects* EffectToAdd);
 };

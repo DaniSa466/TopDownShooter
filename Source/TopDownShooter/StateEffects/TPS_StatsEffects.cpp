@@ -3,22 +3,31 @@
 
 #include "TPS_StatsEffects.h"
 #include "TopDownShooter/Character/TPS_HealthComponent.h"
+#include "TopDownShooter/Game/TPS_GameActorsInterface.h"
 #include "Kismet/GameplayStatics.h"
 
 bool UTPS_StatsEffects::InitObject(AActor* ActorToInit)
 {
 	NewActor = ActorToInit;
 
+	ITPS_GameActorsInterface* myInterface = Cast<ITPS_GameActorsInterface>(NewActor);
+	if (myInterface)
+		myInterface->AddEffect(this);
+
 	return true;
 }
 
 void UTPS_StatsEffects::DestroyObject()
 {
+	ITPS_GameActorsInterface* myInterface = Cast<ITPS_GameActorsInterface>(NewActor);
+	if (myInterface)
+		myInterface->RemoveEffect(this);
+
 	NewActor = nullptr;
 
 	if (this && this->IsValidLowLevel())
 	{
-		this->BeginDestroy();
+		this->ConditionalBeginDestroy();
 	}
 }
 
@@ -30,6 +39,9 @@ bool UTPS_StatsEffects::ChackStackableEffect()
 bool UTPS_EffectExecuteOnce::InitObject(AActor* ActorToInit)
 {
 	Super::InitObject(ActorToInit);
+	ExecuteOnce();
+
+	return true;
 }
 
 void UTPS_EffectExecuteOnce::DestroyObject()

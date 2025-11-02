@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "TopDownShooter/Game/TPS_GameActorsInterface.h"
+#include "TopDownShooter/StateEffects/TPS_StatsEffects.h"
 #include "TPS_EnvironmentStructure.generated.h"
 
 UCLASS()
@@ -25,4 +26,12 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	EPhysicalSurface GetSurfaceType() override;
+
+	TArray<UTPS_StatsEffects*> GetCurrentEffects() override;
+
+	void RemoveEffect(UTPS_StatsEffects* EffectToRemove) override;
+	void AddEffect(UTPS_StatsEffects* EffectToAdd) override;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	TArray<UTPS_StatsEffects*> Effects;
 };

@@ -104,12 +104,20 @@ void ATopDownShooterCharacter::SetupPlayerInputComponent(UInputComponent* NewInp
 	NewInputComponent->BindAxis(TEXT("MoveForward"), this, &ATopDownShooterCharacter::InputAxisX);
 	NewInputComponent->BindAxis(TEXT("MoveRight"), this, &ATopDownShooterCharacter::InputAxisY);
 
-	NewInputComponent->BindAction(TEXT("FireEvent"), EInputEvent::IE_Pressed, this, &ATopDownShooterCharacter::InputAttackPressed);
-	NewInputComponent->BindAction(TEXT("FireEvent"), EInputEvent::IE_Released, this, &ATopDownShooterCharacter::InputAttackReleased);
-	NewInputComponent->BindAction(TEXT("ReloadEvent"), EInputEvent::IE_Released, this, &ATopDownShooterCharacter::TryReloadWeapon);
+	NewInputComponent->BindAction(TEXT("FireEvent"), EInputEvent::IE_Pressed, 
+		this, &ATopDownShooterCharacter::InputAttackPressed);
+	NewInputComponent->BindAction(TEXT("FireEvent"), EInputEvent::IE_Released, 
+		this, &ATopDownShooterCharacter::InputAttackReleased);
+	NewInputComponent->BindAction(TEXT("ReloadEvent"), EInputEvent::IE_Released, 
+		this, &ATopDownShooterCharacter::TryReloadWeapon);
 
-	NewInputComponent->BindAction(TEXT("SwitchNextWeapon"), EInputEvent::IE_Pressed, this, &ATopDownShooterCharacter::SwitchNextWeapon);
-	NewInputComponent->BindAction(TEXT("SwitchPreviousWeapon"), EInputEvent::IE_Pressed, this, &ATopDownShooterCharacter::SwitchPreviousWeapon);
+	NewInputComponent->BindAction(TEXT("SwitchNextWeapon"), EInputEvent::IE_Pressed, 
+		this, &ATopDownShooterCharacter::SwitchNextWeapon);
+	NewInputComponent->BindAction(TEXT("SwitchPreviousWeapon"), EInputEvent::IE_Pressed, 
+		this, &ATopDownShooterCharacter::SwitchPreviousWeapon);
+
+	NewInputComponent->BindAction(TEXT("AbilityAction"), EInputEvent::IE_Pressed,
+		this, &ATopDownShooterCharacter::TryAbilityEnabled);
 }
 
 void ATopDownShooterCharacter::InputAxisX(float Value)
@@ -474,6 +482,16 @@ void ATopDownShooterCharacter::SwitchPreviousWeapon()
 	}
 }
 
+void ATopDownShooterCharacter::TryAbilityEnabled()
+{
+	if (AbilityEffect)
+	{
+		UTPS_StatsEffects* newEffect = NewObject<UTPS_StatsEffects>(this, AbilityEffect);
+		if (newEffect)
+			newEffect->InitObject(this);
+	}
+}
+
 EPhysicalSurface ATopDownShooterCharacter::GetSurfaceType()
 {
 	EPhysicalSurface result = EPhysicalSurface::SurfaceType_Default;
@@ -491,15 +509,32 @@ EPhysicalSurface ATopDownShooterCharacter::GetSurfaceType()
 	return result;
 }
 
+TArray<UTPS_StatsEffects*> ATopDownShooterCharacter::GetCurrentEffects()
+{
+	return Effects;
+}
+
+void ATopDownShooterCharacter::RemoveEffect(UTPS_StatsEffects* EffectToRemove)
+{
+	//EffectToRemove->BeginDestroy();
+
+	Effects.Remove(EffectToRemove);
+}
+
+void ATopDownShooterCharacter::AddEffect(UTPS_StatsEffects* EffectToAdd)
+{
+	Effects.Add(EffectToAdd);
+}
+
 void ATopDownShooterCharacter::CharDead()
 {
 	float AnimTime = 0.0f;
-	int8 AnimNum = FMath::RandHelper(DeadAnimation.Num());
+	int8 AnimNum = FMath::RandHelper(DeadAnimations.Num());
 	
-	if (DeadAnimation[AnimNum] && DeadAnimation.IsValidIndex(AnimNum) && GetMesh()->GetAnimInstance())
+	if (DeadAnimations[AnimNum] && DeadAnimations.IsValidIndex(AnimNum) && GetMesh()->GetAnimInstance())
 	{
-		AnimTime = DeadAnimation[AnimNum]->GetPlayLength();
-		GetMesh()->GetAnimInstance()->Montage_Play(DeadAnimation[AnimNum]);
+		AnimTime = DeadAnimations[AnimNum]->GetPlayLength();
+		GetMesh()->GetAnimInstance()->Montage_Play(DeadAnimations[AnimNum]);
 	}
 	
 	IsAlive = false;
