@@ -7,16 +7,6 @@
 
 void UTypes::AddEffectBySurfaceType(AActor* TakeEffectActor, TSubclassOf<UTPS_StatsEffects> AddEffectClass, EPhysicalSurface PhysSurface)
 {
-	if (!TakeEffectActor)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("UTypes::AddEffectBySurfaceType - TakeEffectActor is NULL"));
-	}
-	UE_LOG(LogTemp, Warning, TEXT("Actor: %s, Class: %s"),
-		*TakeEffectActor->GetName(),
-		*TakeEffectActor->GetClass()->GetName());
-	UE_LOG(LogTemp, Warning, TEXT("Implements interface: %d"),
-		TakeEffectActor->GetClass()->ImplementsInterface(UTPS_GameActorsInterface::StaticClass()));
-
 	if (PhysSurface != EPhysicalSurface::SurfaceType_Default && TakeEffectActor && AddEffectClass)
 	{
 		UTPS_StatsEffects* myEffect = Cast<UTPS_StatsEffects>(AddEffectClass->GetDefaultObject());

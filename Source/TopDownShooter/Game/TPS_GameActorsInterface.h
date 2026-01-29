@@ -8,7 +8,7 @@
 #include "TPS_GameActorsInterface.generated.h"
 
 // This class does not need to be modified.
-UINTERFACE(MinimalAPI)
+UINTERFACE(MinimalAPI, BlueprintType)
 class UTPS_GameActorsInterface : public UInterface
 {
 	GENERATED_BODY()
