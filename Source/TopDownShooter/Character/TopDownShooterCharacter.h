@@ -85,6 +85,7 @@ public:
 	int MaxDeviation = 20;
 
 	float ResSpeed = 600.f;
+	float speedUpCoef = 1.f;
 	
 	int deviation;
 

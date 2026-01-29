@@ -8,9 +8,9 @@
 
 bool UTPS_StatsEffects::InitObject(AActor* ActorToInit)
 {
-	NewActor = ActorToInit;
+	newActor = ActorToInit;
 
-	ITPS_GameActorsInterface* myInterface = Cast<ITPS_GameActorsInterface>(NewActor);
+	ITPS_GameActorsInterface* myInterface = Cast<ITPS_GameActorsInterface>(newActor);
 	if (myInterface)
 		myInterface->AddEffect(this);
 
@@ -19,11 +19,11 @@ bool UTPS_StatsEffects::InitObject(AActor* ActorToInit)
 
 void UTPS_StatsEffects::DestroyObject()
 {
-	ITPS_GameActorsInterface* myInterface = Cast<ITPS_GameActorsInterface>(NewActor);
+	ITPS_GameActorsInterface* myInterface = Cast<ITPS_GameActorsInterface>(newActor);
 	if (myInterface)
 		myInterface->RemoveEffect(this);
 
-	NewActor = nullptr;
+	newActor = nullptr;
 
 	if (this && this->IsValidLowLevel())
 	{
@@ -51,10 +51,10 @@ void UTPS_EffectExecuteOnce::DestroyObject()
 
 void UTPS_EffectExecuteOnce::ExecuteOnce()
 {
-	if (NewActor)
+	if (newActor)
 	{
 		UTPS_HealthComponent* EffectPointerToHealthComponent = Cast<UTPS_HealthComponent>
-			(NewActor->GetComponentByClass(UTPS_HealthComponent::StaticClass()));
+			(newActor->GetComponentByClass(UTPS_HealthComponent::StaticClass()));
 
 		if (EffectPointerToHealthComponent)
 			EffectPointerToHealthComponent->ChangeCurrentHealth(Power);
@@ -63,41 +63,71 @@ void UTPS_EffectExecuteOnce::ExecuteOnce()
 	DestroyObject();
 }
 
-bool UTPS_EffectExecuteTimer::InitObject(AActor* ActorToInit)
+bool UTPS_TemporaryEffect::InitObject(AActor* ActorToInit)
 {
 	Super::InitObject(ActorToInit);
 
 	GetWorld()->GetTimerManager().SetTimer(EffectTimer, this, 
-		&UTPS_EffectExecuteTimer::DestroyObject, Timer, false);
+		&UTPS_TemporaryEffect::DestroyObject, Timer, false);
 	GetWorld()->GetTimerManager().SetTimer(ExecuteTimer, this,
-		&UTPS_EffectExecuteTimer::Execute, RateTime, true);
+		&UTPS_TemporaryEffect::Execute, RateTime, true);
 
 	if (ParticleEffect)
 	{
 		FName BoneNameToAttachEffect;
 		FVector Location;
 		ParticleEmitter = UGameplayStatics::SpawnEmitterAttached(ParticleEffect,
-			NewActor->GetRootComponent(), BoneNameToAttachEffect, Location,
+			newActor->GetRootComponent(), BoneNameToAttachEffect, Location,
 			FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
 	}
 
 	return true;
 }
 
-void UTPS_EffectExecuteTimer::DestroyObject()
+void UTPS_TemporaryEffect::DestroyObject()
 {
+	if (ParticleEmitter == nullptr)
+		return Super::DestroyObject();
+
 	ParticleEmitter->DestroyComponent();
 	ParticleEmitter = nullptr;
 	Super::DestroyObject();
 }
 
-void UTPS_EffectExecuteTimer::Execute()
+void UTPS_TemporaryEffect::Execute()
 {
-	if (NewActor)
+	if (newActor)
 	{
 		UTPS_HealthComponent* EffectPointerToHealthComponent = Cast<UTPS_HealthComponent>
-			(NewActor->GetComponentByClass(UTPS_HealthComponent::StaticClass()));
+			(newActor->GetComponentByClass(UTPS_HealthComponent::StaticClass()));
 		if (EffectPointerToHealthComponent)
 			EffectPointerToHealthComponent->ChangeCurrentHealth(Power);
 	}
+}
+
+bool UTPS_SpeedUpEffect::InitObject(AActor* ActorToSpeedUp)
+{
+	Super::InitObject(ActorToSpeedUp);
+	pointerToCharacter = Cast<ATopDownShooterCharacter>(ActorToSpeedUp);
+
+	if (!pointerToCharacter)
+		return false;
+
+	IncreaseSpeed();
+	GetWorld()->GetTimerManager().SetTimer(decreaseTimer, this,
+		&UTPS_SpeedUpEffect::DestroyObject, speedUpTimer, false);
+
+	return true;
+}
+
+void UTPS_SpeedUpEffect::DestroyObject()
+{
+	Super::DestroyObject();
+
+	pointerToCharacter->speedUpCoef /= speedUpCoef;
+}
+
+void UTPS_SpeedUpEffect::IncreaseSpeed()
+{
+	pointerToCharacter->speedUpCoef *= speedUpCoef;
 }

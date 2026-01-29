@@ -43,6 +43,8 @@ void UTPS_HealthComponent::SetCurrentHealth(float SetHealth)
 
 void UTPS_HealthComponent::ChangeCurrentHealth(float ChangeValue)
 {
+	UE_LOG(LogTemp, Warning, TEXT("HealthComponent::ChangeCurrentHealth ChangeValue -%d"), ChangeValue);
+
 	ChangeValue *= DamageCoef;
 
 	HealthValue += ChangeValue;
@@ -58,4 +60,6 @@ void UTPS_HealthComponent::ChangeCurrentHealth(float ChangeValue)
 			OnDead.Broadcast();
 		}
 	}
+
+	UE_LOG(LogTemp, Warning, TEXT("HealthComponent::ChangeCurrentHealth ChangeValue -%d"), HealthValue);
 }

@@ -221,19 +221,19 @@ void ATopDownShooterCharacter::CharacterUpdate()
 	switch (MovementState)
 	{
 	case EMovementState::Aim_State:
-		ResSpeed = MovementSpeedInfo.Aim_Speed;
+		ResSpeed = MovementSpeedInfo.Aim_Speed * speedUpCoef;
 		break;
 	case EMovementState::Walk_State:
-		ResSpeed = MovementSpeedInfo.Walk_Speed;
+		ResSpeed = MovementSpeedInfo.Walk_Speed * speedUpCoef;
 		break;
 	case EMovementState::AimWalk_State:
-		ResSpeed = MovementSpeedInfo.AimWalk_Speed;
+		ResSpeed = MovementSpeedInfo.AimWalk_Speed * speedUpCoef;
 		break;
 	case EMovementState::Run_State:
-		ResSpeed = MovementSpeedInfo.Run_Speed;
+		ResSpeed = MovementSpeedInfo.Run_Speed * speedUpCoef;
 		break;
 	case EMovementState::SprintRun_State:
-		ResSpeed = MovementSpeedInfo.SprintRun_Speed;
+		ResSpeed = MovementSpeedInfo.SprintRun_Speed * speedUpCoef;
 		break;
 	default:
 		break;
@@ -486,9 +486,10 @@ void ATopDownShooterCharacter::TryAbilityEnabled()
 {
 	if (AbilityEffect)
 	{
-		UTPS_StatsEffects* newEffect = NewObject<UTPS_StatsEffects>(this, AbilityEffect);
+		UTypes::AddEffectBySurfaceType(this, AbilityEffect, EPhysicalSurface::SurfaceType3);
+		/*UTPS_StatsEffects* newEffect = NewObject<UTPS_StatsEffects>(this, AbilityEffect);
 		if (newEffect)
-			newEffect->InitObject(this);
+			newEffect->InitObject(this);*/
 	}
 }
 
@@ -531,7 +532,7 @@ void ATopDownShooterCharacter::CharDead()
 	float AnimTime = 0.0f;
 	int8 AnimNum = FMath::RandHelper(DeadAnimations.Num());
 	
-	if (DeadAnimations[AnimNum] && DeadAnimations.IsValidIndex(AnimNum) && GetMesh()->GetAnimInstance())
+	if (DeadAnimations.Num() > 0 && DeadAnimations[AnimNum] && DeadAnimations.IsValidIndex(AnimNum) && GetMesh()->GetAnimInstance())
 	{
 		AnimTime = DeadAnimations[AnimNum]->GetPlayLength();
 		GetMesh()->GetAnimInstance()->Montage_Play(DeadAnimations[AnimNum]);

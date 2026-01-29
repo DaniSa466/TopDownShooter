@@ -20,7 +20,7 @@ void UTypes::AddEffectBySurfaceType(AActor* TakeEffectActor, TSubclassOf<UTPS_St
 				if (myEffect->PossibleInteractSurface[i] == PhysSurface)
 				{
 					bHasPossibleSurface = true;
-					bool EffectCanBeAdded = true;
+					bool EffectCanBeAdded = false;
 					if (!myEffect->bIsStackable)
 					{
 						int8 j = 0;
@@ -34,18 +34,18 @@ void UTypes::AddEffectBySurfaceType(AActor* TakeEffectActor, TSubclassOf<UTPS_St
 						{
 							while (j < CurrentEffects.Num() && EffectCanBeAdded)
 							{
-								if (CurrentEffects[j]->GetClass() == AddEffectClass)
-									EffectCanBeAdded = false;
+								if (CurrentEffects[j]->GetClass() != AddEffectClass)
+									EffectCanBeAdded = true;
 								j++;
 							}
 						}
 						else
-							EffectCanBeAdded = false;
+							EffectCanBeAdded = true;
 					}
 					else
-						EffectCanBeAdded = false;
+						EffectCanBeAdded = true;
 
-					if (!EffectCanBeAdded)
+					if (EffectCanBeAdded)
 					{
 						bHasPossibleSurface = true;
 						UTPS_StatsEffects* newEffect = NewObject<UTPS_StatsEffects>(TakeEffectActor, AddEffectClass);

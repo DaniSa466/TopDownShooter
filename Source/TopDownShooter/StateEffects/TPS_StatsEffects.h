@@ -1,7 +1,9 @@
+// Fill out your copyright notice in the Description page of Project Settings.
 #pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "TopDownShooter/Character/TopDownShooterCharacter.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "TPS_StatsEffects.generated.h"
@@ -26,7 +28,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	bool bIsStackable = false;
 
-	AActor* NewActor = nullptr;
+	AActor* newActor = nullptr;
 };
 
 UCLASS(Blueprintable, BlueprintType)
@@ -44,7 +46,7 @@ public:
 };
 
 UCLASS(Blueprintable, BlueprintType)
-class TOPDOWNSHOOTER_API UTPS_EffectExecuteTimer : public UTPS_StatsEffects
+class TOPDOWNSHOOTER_API UTPS_TemporaryEffect : public UTPS_StatsEffects
 {
 	GENERATED_BODY()
 
@@ -67,4 +69,23 @@ public:
 	UParticleSystem* ParticleEffect = nullptr;
 
 	UParticleSystemComponent* ParticleEmitter = nullptr;
+};
+
+UCLASS(Blueprintable, BlueprintType)
+class TOPDOWNSHOOTER_API UTPS_SpeedUpEffect : public UTPS_StatsEffects
+{
+	GENERATED_BODY()
+
+public:
+	bool InitObject(AActor* ActorToSpeedUp) override;
+	void DestroyObject() override;
+	void IncreaseSpeed();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float speedUpCoef = 1.2f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float speedUpTimer = 5.f;
+
+	ATopDownShooterCharacter* pointerToCharacter = nullptr;
+	FTimerHandle decreaseTimer;
 };
