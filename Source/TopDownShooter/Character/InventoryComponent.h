@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "TopDownShooter/FuncLibrary/Types.h"
-#include "TopDownShooterCharacter.h"
 #include "InventoryComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnSwitchWeapon, FName, IdWeaponName, FAdditionalWeaponInfo, AdditionalWeaponInfo, int32, NewCurrentIndexWeapon);

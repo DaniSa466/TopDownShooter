@@ -2,6 +2,7 @@
 
 
 #include "InventoryComponent.h"
+#include "TopDownShooterCharacter.h"
 #include "TopDownShooter/Game/TopDownShooterGameInstance.h"
 
 // Sets default values for this component's properties

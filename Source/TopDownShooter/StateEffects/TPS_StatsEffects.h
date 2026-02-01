@@ -3,7 +3,6 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "TopDownShooter/Character/TopDownShooterCharacter.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "TPS_StatsEffects.generated.h"
@@ -11,6 +10,8 @@
 /**
  * 
  */
+class ATopDownShooterCharacter;
+
 UCLASS(Blueprintable, BlueprintType)
 class TOPDOWNSHOOTER_API UTPS_StatsEffects : public UObject
 {

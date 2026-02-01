@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-#pragma once
 
 #include "TPS_StatsEffects.h"
 #include "TopDownShooter/Character/TPS_HealthComponent.h"
 #include "TopDownShooter/Game/TPS_GameActorsInterface.h"
+#include "TopDownShooter/Character/TopDownShooterCharacter.h"
 #include "Kismet/GameplayStatics.h"
 
 bool UTPS_StatsEffects::InitObject(AActor* ActorToInit)
