@@ -5,12 +5,13 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InventoryComponent.h"
-#include "TPS_CharHealthComponent.h"
 #include "TopDownShooter/FuncLibrary/Types.h"
 #include "TopDownShooter/Weapon/WeaponDefault.h"
 #include "TopDownShooter/Game/TPS_GameActorsInterface.h"
-#include "TopDownShooter/StateEffects/TPS_StatsEffects.h"
 #include "TopDownShooterCharacter.generated.h"
+
+class UTPS_StatsEffects;
+class UTPS_CharHealthComponent;
 
 UCLASS(Blueprintable)
 class ATopDownShooterCharacter : public ACharacter, public ITPS_GameActorsInterface
@@ -47,6 +48,10 @@ private:
 	/** Camera boom positioning the camera above the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
+
+	//coef for effects
+	float speedUpCoef = 1.f;
+	bool resistToDamage = false;
 
 public:
 	//variables
@@ -85,7 +90,6 @@ public:
 	int MaxDeviation = 20;
 
 	float ResSpeed = 600.f;
-	float speedUpCoef = 1.f;
 	
 	int deviation;
 
@@ -121,6 +125,17 @@ public:
 	//Effect
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 	TArray<UTPS_StatsEffects*> Effects;
+
+	//getters and setters for effects
+	void SetSpeedCoef(float newCoef = 1.f);
+
+	UFUNCTION()
+	void SetResistToDamage(bool resist = false);
+
+	UFUNCTION(BlueprintCallable)
+	bool GetResistToDamage();
+
+	UTPS_CharHealthComponent* GetHealthComponent();
 
 	//inputs
 	UFUNCTION()

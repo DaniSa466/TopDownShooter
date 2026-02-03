@@ -13,6 +13,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "InventoryComponent.h"
 #include "TopDownShooter/Game/TopDownShooterPlayerController.h"
+#include "TopDownShooter/StateEffects/TPS_StatsEffects.h"
+#include "TPS_CharHealthComponent.h"
 #include "TopDownShooter/Game/TopDownShooterGameInstance.h"
 #include "TopDownShooter/Weapon/ProjectileDefault.h"
 #include "Materials/Material.h"
@@ -120,6 +122,28 @@ void ATopDownShooterCharacter::SetupPlayerInputComponent(UInputComponent* NewInp
 		this, &ATopDownShooterCharacter::TryAbilityEnabled);
 }
 
+void ATopDownShooterCharacter::SetSpeedCoef(float newCoef)
+{
+	speedUpCoef = newCoef;
+}
+
+void ATopDownShooterCharacter::SetResistToDamage(bool immune)
+{
+	resistToDamage = immune;
+}
+
+bool ATopDownShooterCharacter::GetResistToDamage()
+{
+	return resistToDamage;
+}
+
+UTPS_CharHealthComponent* ATopDownShooterCharacter::GetHealthComponent()
+{
+	return HealthComponent;
+}
+
+
+
 void ATopDownShooterCharacter::InputAxisX(float Value)
 {
 	AxisX = Value;
@@ -221,25 +245,25 @@ void ATopDownShooterCharacter::CharacterUpdate()
 	switch (MovementState)
 	{
 	case EMovementState::Aim_State:
-		ResSpeed = MovementSpeedInfo.Aim_Speed * speedUpCoef;
+		ResSpeed = MovementSpeedInfo.Aim_Speed;
 		break;
 	case EMovementState::Walk_State:
-		ResSpeed = MovementSpeedInfo.Walk_Speed * speedUpCoef;
+		ResSpeed = MovementSpeedInfo.Walk_Speed;
 		break;
 	case EMovementState::AimWalk_State:
-		ResSpeed = MovementSpeedInfo.AimWalk_Speed * speedUpCoef;
+		ResSpeed = MovementSpeedInfo.AimWalk_Speed;
 		break;
 	case EMovementState::Run_State:
-		ResSpeed = MovementSpeedInfo.Run_Speed * speedUpCoef;
+		ResSpeed = MovementSpeedInfo.Run_Speed;
 		break;
 	case EMovementState::SprintRun_State:
-		ResSpeed = MovementSpeedInfo.SprintRun_Speed * speedUpCoef;
+		ResSpeed = MovementSpeedInfo.SprintRun_Speed;
 		break;
 	default:
 		break;
 	}
 
-	GetCharacterMovement()->MaxWalkSpeed = ResSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = ResSpeed * speedUpCoef;
 }
 
 void ATopDownShooterCharacter::ChangeMovementState()
@@ -561,7 +585,10 @@ float ATopDownShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent cons
 	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	if (IsAlive)
-		HealthComponent->ChangeCurrentHealth(-DamageAmount);
+	{
+		if (!resistToDamage)
+			HealthComponent->ChangeCurrentHealth(-DamageAmount);
+	}
 
 	if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID))
 	{

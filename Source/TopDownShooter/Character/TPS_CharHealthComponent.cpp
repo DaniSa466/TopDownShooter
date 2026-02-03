@@ -89,3 +89,24 @@ void UTPS_CharHealthComponent::RecoveryShield()
 
 	OnShieldChangeStrenght.Broadcast(ShieldStrenghtVar, ShieldRecoveryValue);
 }
+
+float UTPS_CharHealthComponent::GetMaxHealth()
+{
+	return maxHealth;
+}
+
+void UTPS_CharHealthComponent::IncreaseHealthByCoef(float coef)
+{
+	maxHealth *= coef;
+	HealthValue *= coef;
+
+	OnHealthIncreaseEffect.Broadcast(maxHealth, coef);
+}
+
+void UTPS_CharHealthComponent::DecreasehealthByCoef(float coef)
+{
+	maxHealth /= coef;
+	HealthValue /= coef;
+
+	OnHealthIncreaseEffect.Broadcast(maxHealth, coef);
+}

@@ -34,6 +34,7 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	float maxHealth = 100.f;
 	float HealthValue = 100.f;
 
 public:	

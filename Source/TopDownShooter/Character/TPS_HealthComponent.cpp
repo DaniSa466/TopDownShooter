@@ -50,8 +50,8 @@ void UTPS_HealthComponent::ChangeCurrentHealth(float ChangeValue)
 	HealthValue += ChangeValue;
 	OnHealthChange.Broadcast(HealthValue, ChangeValue);
 
-	if (HealthValue > 100.f)
-		HealthValue = 100.f;
+	if (HealthValue > maxHealth)
+		HealthValue = maxHealth;
 	else
 	{
 

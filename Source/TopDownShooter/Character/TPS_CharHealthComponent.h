@@ -7,6 +7,7 @@
 #include "TPS_CharHealthComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnShieldChangeStrenght, float, ShieldStrenght, float, damage);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthIncreaseEffect, float, maxHealth, float, coef);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnShieldBroken);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnShieldRecovered);
 
@@ -24,6 +25,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Shield")
 	FOnShieldRecovered OnShieldRecovered;
+
+	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Effect")
+	FOnHealthIncreaseEffect OnHealthIncreaseEffect;
 
 	FTimerHandle TimerHandle_CoolDownShieldTimer;
 	FTimerHandle TimerHandle_ShieldRecoveryRateTimer;
@@ -57,13 +61,16 @@ public:
 	USoundBase* ShieldIsRecoveredSound = nullptr;
 
 	void ChangeCurrentHealth(float ChangeValue) override;
-
 	void ChangeShieldStrenght(float ChangeValue);
 
 	UFUNCTION(BlueprintCallable)
 	float GetShieldStrenght();
 
 	void ShieldCoolDownEnd();
-
 	void RecoveryShield();
+
+	//effect
+	float GetMaxHealth();
+	void IncreaseHealthByCoef(float coef);
+	void DecreasehealthByCoef(float coef);
 };

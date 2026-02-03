@@ -11,6 +11,7 @@
  * 
  */
 class ATopDownShooterCharacter;
+class UTPS_CharHealthComponent;
 
 UCLASS(Blueprintable, BlueprintType)
 class TOPDOWNSHOOTER_API UTPS_StatsEffects : public UObject
@@ -18,11 +19,6 @@ class TOPDOWNSHOOTER_API UTPS_StatsEffects : public UObject
 	GENERATED_BODY()
 	
 public:
-	virtual bool InitObject(AActor* ActorToInit);
-	virtual void DestroyObject();
-
-	virtual bool ChackStackableEffect();
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	TArray <TEnumAsByte<EPhysicalSurface>> PossibleInteractSurface;
 
@@ -30,6 +26,11 @@ public:
 	bool bIsStackable = false;
 
 	AActor* newActor = nullptr;
+
+	virtual bool InitObject(AActor* ActorToInit);
+	virtual void DestroyObject();
+
+	virtual bool ChackStackableEffect();
 };
 
 UCLASS(Blueprintable, BlueprintType)
@@ -37,13 +38,14 @@ class TOPDOWNSHOOTER_API UTPS_EffectExecuteOnce : public UTPS_StatsEffects
 {
 	GENERATED_BODY()
 
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect Execute Once Setting")
+	float Power = 20.f;
+
 public:
 	bool InitObject(AActor* ActorToInit) override;
 	void DestroyObject() override;
 	void ExecuteOnce();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect Execute Once Setting")
-	float Power = 20.f;
 };
 
 UCLASS(Blueprintable, BlueprintType)
@@ -51,11 +53,7 @@ class TOPDOWNSHOOTER_API UTPS_TemporaryEffect : public UTPS_StatsEffects
 {
 	GENERATED_BODY()
 
-public:
-	bool InitObject(AActor* ActorToInit) override;
-	void DestroyObject() override;
-	void Execute();
-
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect Execute Timer Setting")
 	float Power = 20.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect Execute Timer Setting")
@@ -70,6 +68,11 @@ public:
 	UParticleSystem* ParticleEffect = nullptr;
 
 	UParticleSystemComponent* ParticleEmitter = nullptr;
+
+public:
+	bool InitObject(AActor* ActorToInit) override;
+	void DestroyObject() override;
+	void Execute();
 };
 
 UCLASS(Blueprintable, BlueprintType)
@@ -77,11 +80,7 @@ class TOPDOWNSHOOTER_API UTPS_SpeedUpEffect : public UTPS_StatsEffects
 {
 	GENERATED_BODY()
 
-public:
-	bool InitObject(AActor* ActorToSpeedUp) override;
-	void DestroyObject() override;
-	void IncreaseSpeed();
-
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float speedUpCoef = 1.2f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -89,4 +88,50 @@ public:
 
 	ATopDownShooterCharacter* pointerToCharacter = nullptr;
 	FTimerHandle decreaseTimer;
+
+public:
+	bool InitObject(AActor* ActorToSpeedUp) override;
+	void DestroyObject() override;
+	void IncreaseSpeed();
+};
+
+UCLASS(Blueprintable, BlueprintType)
+class TOPDOWNSHOOTER_API UTPS_EffectsToHealth : public UTPS_StatsEffects
+{
+	GENERATED_BODY()
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float healthCoef = 1.5f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float timer = 5;
+
+	ATopDownShooterCharacter* pointerToCharacter = nullptr;
+	UTPS_CharHealthComponent* pointerToHealthComponent = nullptr;
+	FTimerHandle backTimer;
+
+public:
+	bool InitObject(AActor* actorToInit) override;
+	void DestroyObject() override;
+	void ChangeHealthCoef();
+};
+
+UCLASS(Blueprintable, BlueprintType)
+class TOPDOWNSHOOTER_API UTPS_StunEffect : public UTPS_StatsEffects
+{
+	GENERATED_BODY()
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UAnimMontage* loopAnimation = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float timer = 3.f;
+
+	ATopDownShooterCharacter* pointerToCharacter = nullptr;
+	FTimerHandle stunTimer;
+
+public:
+	bool InitObject(AActor* ActorToStun) override;
+	void DestroyObject() override;
+	void ChangeCharacterInputStatus(bool isStun);
 };

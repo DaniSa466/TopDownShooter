@@ -4,6 +4,8 @@
 #include "TopDownShooter/Character/TPS_HealthComponent.h"
 #include "TopDownShooter/Game/TPS_GameActorsInterface.h"
 #include "TopDownShooter/Character/TopDownShooterCharacter.h"
+#include "TopDownShooter/Game/TopDownShooterPlayerController.h"
+#include "TopDownShooter/Character/TPS_CharHealthComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 bool UTPS_StatsEffects::InitObject(AActor* ActorToInit)
@@ -122,12 +124,94 @@ bool UTPS_SpeedUpEffect::InitObject(AActor* ActorToSpeedUp)
 
 void UTPS_SpeedUpEffect::DestroyObject()
 {
-	Super::DestroyObject();
+	pointerToCharacter->SetSpeedCoef();
 
-	pointerToCharacter->speedUpCoef /= speedUpCoef;
+	Super::DestroyObject();
 }
 
 void UTPS_SpeedUpEffect::IncreaseSpeed()
 {
-	pointerToCharacter->speedUpCoef *= speedUpCoef;
+	pointerToCharacter->SetSpeedCoef(speedUpCoef);
+}
+
+bool UTPS_EffectsToHealth::InitObject(AActor* actorToInit)
+{
+	Super::InitObject(actorToInit);
+	pointerToCharacter = Cast<ATopDownShooterCharacter>(actorToInit);
+
+	if (!pointerToCharacter)
+		return false;
+
+	pointerToHealthComponent = pointerToCharacter->GetHealthComponent();
+	if (!pointerToHealthComponent)
+		return false;
+
+	ChangeHealthCoef();
+	GetWorld()->GetTimerManager().SetTimer(backTimer, this, &UTPS_EffectsToHealth::DestroyObject, timer, false);
+
+	return true;
+}
+
+void UTPS_EffectsToHealth::DestroyObject()
+{
+	//resist to damage effect
+	if (healthCoef == 0)
+		pointerToCharacter->SetResistToDamage(false);
+	//increasing health effect
+	else
+	{
+		pointerToHealthComponent->DecreasehealthByCoef(healthCoef);
+	}
+
+	Super::DestroyObject();
+}
+
+void UTPS_EffectsToHealth::ChangeHealthCoef()
+{
+	//resist to damage effect
+	if (healthCoef == 0)
+		pointerToCharacter->SetResistToDamage(true);
+	//increasing health effect
+	else
+	{
+		pointerToHealthComponent->IncreaseHealthByCoef(healthCoef);
+	}
+}
+
+bool UTPS_StunEffect::InitObject(AActor* ActorToStun)
+{
+	Super::InitObject(ActorToStun);
+	pointerToCharacter = Cast<ATopDownShooterCharacter>(ActorToStun);
+
+	if (!pointerToCharacter)
+		return false;
+
+	ChangeCharacterInputStatus(true);
+	GetWorld()->GetTimerManager().SetTimer(stunTimer, this, &UTPS_StunEffect::DestroyObject, timer, false);
+
+	return true;
+}
+
+void UTPS_StunEffect::DestroyObject()
+{
+	ChangeCharacterInputStatus(false);
+	Super::DestroyObject();
+}
+
+void UTPS_StunEffect::ChangeCharacterInputStatus(bool isStun)
+{
+	if (isStun)
+	{
+		if (loopAnimation)
+			pointerToCharacter->PlayAnimMontage(loopAnimation);
+
+		pointerToCharacter->ResSpeed = 0;
+		//pointerToCharacter->GetCharacterMovement()->StopMovementImmediately();
+		pointerToCharacter->DisableInput(Cast<APlayerController>(pointerToCharacter->GetController()));
+	}
+	else
+	{
+		pointerToCharacter->EnableInput(Cast<APlayerController>(pointerToCharacter->GetController()));
+		pointerToCharacter->ChangeMovementState();
+	}
 }
