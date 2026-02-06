@@ -13,6 +13,7 @@
 class ATopDownShooterCharacter;
 class UTPS_CharHealthComponent;
 
+
 UCLASS(Blueprintable, BlueprintType)
 class TOPDOWNSHOOTER_API UTPS_StatsEffects : public UObject
 {
@@ -81,9 +82,9 @@ class TOPDOWNSHOOTER_API UTPS_SpeedUpEffect : public UTPS_StatsEffects
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SpeedUp Effect Setting")
 	float speedUpCoef = 1.2f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SpeedUp Effect Setting")
 	float speedUpTimer = 5.f;
 
 	ATopDownShooterCharacter* pointerToCharacter = nullptr;
@@ -101,10 +102,14 @@ class TOPDOWNSHOOTER_API UTPS_EffectsToHealth : public UTPS_StatsEffects
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect to Health Setting")
 	float healthCoef = 1.5f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect to Health Setting")
 	float timer = 5;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resist to Damage Particle Setting")
+	UParticleSystem* ParticleEffect = nullptr;
+
+	UParticleSystemComponent* ParticleEmitter = nullptr;
 
 	ATopDownShooterCharacter* pointerToCharacter = nullptr;
 	UTPS_CharHealthComponent* pointerToHealthComponent = nullptr;
@@ -122,10 +127,14 @@ class TOPDOWNSHOOTER_API UTPS_StunEffect : public UTPS_StatsEffects
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stun Effect Setting")
 	UAnimMontage* loopAnimation = nullptr;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stun Effect Setting")
 	float timer = 3.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stun Effect Setting")
+	UParticleSystem* ParticleEffect = nullptr;
+
+	UParticleSystemComponent* ParticleEmitter = nullptr;
 
 	ATopDownShooterCharacter* pointerToCharacter = nullptr;
 	FTimerHandle stunTimer;

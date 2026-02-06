@@ -13,6 +13,9 @@
 class UTPS_StatsEffects;
 class UTPS_CharHealthComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnEnableSpeedUpEffect);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDisableSpeedUpEffect);
+
 UCLASS(Blueprintable)
 class ATopDownShooterCharacter : public ACharacter, public ITPS_GameActorsInterface
 {
@@ -41,19 +44,27 @@ public:
 	class UTPS_CharHealthComponent* HealthComponent;
 
 private:
-	/** Top down camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* TopDownCameraComponent;
-
 	/** Camera boom positioning the camera above the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* CameraBoom;
+	class USpringArmComponent* CameraBoom; 
 
 	//coef for effects
 	float speedUpCoef = 1.f;
 	bool resistToDamage = false;
 
+protected:
+	/** Top down camera */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class UCameraComponent* TopDownCameraComponent;
+
 public:
+	//delegates
+	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite)
+	FOnEnableSpeedUpEffect OnEnableSpeedUpEffect;
+
+	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite)
+	FOnDisableSpeedUpEffect OnDisableSpeedUpEffect;
+
 	//variables
 	//cursor
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cursor")

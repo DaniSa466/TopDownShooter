@@ -125,6 +125,7 @@ bool UTPS_SpeedUpEffect::InitObject(AActor* ActorToSpeedUp)
 void UTPS_SpeedUpEffect::DestroyObject()
 {
 	pointerToCharacter->SetSpeedCoef();
+	pointerToCharacter->OnDisableSpeedUpEffect.Broadcast();
 
 	Super::DestroyObject();
 }
@@ -132,6 +133,7 @@ void UTPS_SpeedUpEffect::DestroyObject()
 void UTPS_SpeedUpEffect::IncreaseSpeed()
 {
 	pointerToCharacter->SetSpeedCoef(speedUpCoef);
+	pointerToCharacter->OnEnableSpeedUpEffect.Broadcast();
 }
 
 bool UTPS_EffectsToHealth::InitObject(AActor* actorToInit)
@@ -156,7 +158,15 @@ void UTPS_EffectsToHealth::DestroyObject()
 {
 	//resist to damage effect
 	if (healthCoef == 0)
+	{
 		pointerToCharacter->SetResistToDamage(false);
+
+		if (ParticleEmitter)
+		{
+			ParticleEmitter->DestroyComponent();
+			ParticleEmitter = nullptr;
+		}
+	}
 	//increasing health effect
 	else
 	{
@@ -170,7 +180,27 @@ void UTPS_EffectsToHealth::ChangeHealthCoef()
 {
 	//resist to damage effect
 	if (healthCoef == 0)
+	{
 		pointerToCharacter->SetResistToDamage(true);
+
+		USkeletalMeshComponent* characterMesh = pointerToCharacter->GetMesh();
+		if (ParticleEffect && characterMesh)
+		{
+			FName BoneNameToAttachEffect = "ik_foot_root";
+
+			if (!characterMesh->DoesSocketExist(BoneNameToAttachEffect))
+			{
+				UE_LOG(LogTemp, Warning, TEXT("UTPS_EffectsToHealth::ChangeHealthCoef - Bone not found, attaching to root component"));
+				ParticleEmitter = UGameplayStatics::SpawnEmitterAttached(ParticleEffect,
+					characterMesh, NAME_None, FVector::ZeroVector, FRotator::ZeroRotator,
+					EAttachLocation::SnapToTarget, false);
+			}
+			else
+				ParticleEmitter = UGameplayStatics::SpawnEmitterAttached(ParticleEffect,
+				characterMesh, BoneNameToAttachEffect, FVector::ZeroVector,
+				FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+		}
+	}
 	//increasing health effect
 	else
 	{
@@ -195,6 +225,13 @@ bool UTPS_StunEffect::InitObject(AActor* ActorToStun)
 void UTPS_StunEffect::DestroyObject()
 {
 	ChangeCharacterInputStatus(false);
+	
+	if (ParticleEmitter)
+	{
+		ParticleEmitter->DestroyComponent();
+		ParticleEmitter = nullptr;
+	}
+
 	Super::DestroyObject();
 }
 
@@ -208,6 +245,24 @@ void UTPS_StunEffect::ChangeCharacterInputStatus(bool isStun)
 		pointerToCharacter->ResSpeed = 0;
 		//pointerToCharacter->GetCharacterMovement()->StopMovementImmediately();
 		pointerToCharacter->DisableInput(Cast<APlayerController>(pointerToCharacter->GetController()));
+
+		USkeletalMeshComponent* characterMesh = pointerToCharacter->GetMesh();
+		if (ParticleEffect && characterMesh)
+		{
+			FName BoneNameToAttachEffect = "head";
+
+			if (!characterMesh->DoesSocketExist(BoneNameToAttachEffect))
+			{
+				UE_LOG(LogTemp, Warning, TEXT("UTPS_EffectsToHealth::ChangeHealthCoef - Bone not found, attaching to root component"));
+				ParticleEmitter = UGameplayStatics::SpawnEmitterAttached(ParticleEffect,
+					characterMesh, NAME_None, FVector::ZeroVector, FRotator::ZeroRotator,
+					EAttachLocation::SnapToTarget, false);
+			}
+			else
+				ParticleEmitter = UGameplayStatics::SpawnEmitterAttached(ParticleEffect,
+					characterMesh, BoneNameToAttachEffect, FVector::ZeroVector,
+					FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+		}
 	}
 	else
 	{
