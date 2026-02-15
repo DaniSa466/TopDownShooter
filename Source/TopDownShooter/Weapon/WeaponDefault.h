@@ -5,12 +5,10 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/ArrowComponent.h"
-
 #include "TopDownShooter/FuncLibrary/Types.h"
 #include "TopDownShooter/Weapon/ProjectileDefault.h"
 #include "WeaponDefault.generated.h"
 
-//DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponFireStart);//ToDo Delegate on event weapon fire - Anim char, state char...
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponFire, UAnimMontage*, Anim);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponReloadStart, UAnimMontage*, Anim);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponReloadEnd, bool, bIsSuccess, int32, AmmoReamain);
@@ -102,6 +100,7 @@ public:
 	void FinishReload();
 	void CancelReload();
 
+	bool CheckWeaponCanBeReloaded();
 	int16 GetAvialableAmmo();
 
 	UFUNCTION(BlueprintNativeEvent)

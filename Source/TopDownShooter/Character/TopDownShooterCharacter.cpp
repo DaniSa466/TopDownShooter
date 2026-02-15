@@ -120,6 +120,32 @@ void ATopDownShooterCharacter::SetupPlayerInputComponent(UInputComponent* NewInp
 
 	NewInputComponent->BindAction(TEXT("AbilityAction"), EInputEvent::IE_Pressed,
 		this, &ATopDownShooterCharacter::TryAbilityEnabled);
+
+	NewInputComponent->BindAction(TEXT("DropCurrentWeapon"), EInputEvent::IE_Pressed,
+		this, &ATopDownShooterCharacter::DropCurrentWeapon);
+
+	TArray<FKey> HotKeys;
+	HotKeys.Add(EKeys::One);
+	HotKeys.Add(EKeys::Two);
+	HotKeys.Add(EKeys::Three);
+	HotKeys.Add(EKeys::Four);
+	HotKeys.Add(EKeys::Five);
+	HotKeys.Add(EKeys::Six);
+	HotKeys.Add(EKeys::Seven);
+	HotKeys.Add(EKeys::Eight);
+	HotKeys.Add(EKeys::Nine);
+	HotKeys.Add(EKeys::Zero);
+
+	NewInputComponent->BindKey(HotKeys[1], IE_Pressed, this, &ATopDownShooterCharacter::TKeyPressed<1>);
+	NewInputComponent->BindKey(HotKeys[2], IE_Pressed, this, &ATopDownShooterCharacter::TKeyPressed<2>);
+	NewInputComponent->BindKey(HotKeys[3], IE_Pressed, this, &ATopDownShooterCharacter::TKeyPressed<3>);
+	NewInputComponent->BindKey(HotKeys[4], IE_Pressed, this, &ATopDownShooterCharacter::TKeyPressed<4>);
+	NewInputComponent->BindKey(HotKeys[5], IE_Pressed, this, &ATopDownShooterCharacter::TKeyPressed<5>);
+	NewInputComponent->BindKey(HotKeys[6], IE_Pressed, this, &ATopDownShooterCharacter::TKeyPressed<6>);
+	NewInputComponent->BindKey(HotKeys[7], IE_Pressed, this, &ATopDownShooterCharacter::TKeyPressed<7>);
+	NewInputComponent->BindKey(HotKeys[8], IE_Pressed, this, &ATopDownShooterCharacter::TKeyPressed<8>);
+	NewInputComponent->BindKey(HotKeys[9], IE_Pressed, this, &ATopDownShooterCharacter::TKeyPressed<9>);
+	NewInputComponent->BindKey(HotKeys[0], IE_Pressed, this, &ATopDownShooterCharacter::TKeyPressed<0>);
 }
 
 void ATopDownShooterCharacter::SetSpeedCoef(float newCoef)
@@ -367,6 +393,21 @@ AWeaponDefault* ATopDownShooterCharacter::GetCurrentWeapon()
 	return CurrentWeapon;
 }
 
+EMovementState ATopDownShooterCharacter::GetMovementState()
+{
+	return MovementState;
+}
+
+TArray<UTPS_StatsEffects*> ATopDownShooterCharacter::GetCurrentEffectsOnChar()
+{
+	return Effects;
+}
+
+int32 ATopDownShooterCharacter::GetCurrentWeaponIndex()
+{
+	return CurrentIndexWeapon;
+}
+
 void ATopDownShooterCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo AdditionalWeaponInfo, int32 NewCurrentIndexWeapon)
 {
 	if (CurrentWeapon)
@@ -428,6 +469,33 @@ void ATopDownShooterCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponI
 	}
 }
 
+bool ATopDownShooterCharacter::TrySwitchWeaponToIndexByKeyInput(int32 index)
+{
+	bool isSuccess = false;
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlots.IsValidIndex(index))
+	{
+		if (CurrentIndexWeapon != index)
+		{
+			int32 oldIndex = CurrentIndexWeapon;
+			FAdditionalWeaponInfo oldInfo;
+
+			oldInfo = CurrentWeapon->AdditionalWeaponInfo;
+			isSuccess = InventoryComponent->SwitchWeaponToIndex(index, oldIndex, oldInfo);
+		}
+	}
+
+	return isSuccess;
+}
+
+void ATopDownShooterCharacter::DropCurrentWeapon()
+{
+	if (InventoryComponent)
+	{
+		FDropItem ItemInfo;
+		InventoryComponent->DropWeaponByIndex(CurrentIndexWeapon, ItemInfo);
+	}
+}
+
 void ATopDownShooterCharacter::WeaponFire(UAnimMontage* Anim)
 {
 	if (InventoryComponent && CurrentWeapon)
@@ -474,35 +542,29 @@ UDecalComponent* ATopDownShooterCharacter::GetCursorToWorld()
 
 void ATopDownShooterCharacter::SwitchNextWeapon()
 {
-	if (InventoryComponent->WeaponSlots.Num() > 1)
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlots.Num() > 1)
 	{
 		FAdditionalWeaponInfo OldInfo;
 
-		if (CurrentWeapon)
-		{
 			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
 			if (CurrentWeapon->WeaponReloading)
 				CurrentWeapon->CancelReload();
-		}
 
-		InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon, OldInfo, true);
+		InventoryComponent->SwitchWeaponToNextOrPrevious(CurrentIndexWeapon, OldInfo, true);
 	}
 }
 
 void ATopDownShooterCharacter::SwitchPreviousWeapon()
 {
-	if (InventoryComponent->WeaponSlots.Num() > 1)
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading &&  InventoryComponent->WeaponSlots.Num() > 1)
 	{
 		FAdditionalWeaponInfo OldInfo;
 
-		if (CurrentWeapon)
-		{
 			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
 			if (CurrentWeapon->WeaponReloading)
 				CurrentWeapon->CancelReload();
-		}
 
-		InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon, OldInfo, false);
+		InventoryComponent->SwitchWeaponToNextOrPrevious(CurrentIndexWeapon, OldInfo, false);
 	}
 }
 
@@ -511,9 +573,6 @@ void ATopDownShooterCharacter::TryAbilityEnabled()
 	if (AbilityEffect)
 	{
 		UTypes::AddEffectBySurfaceType(this, AbilityEffect, EPhysicalSurface::SurfaceType3);
-		/*UTPS_StatsEffects* newEffect = NewObject<UTPS_StatsEffects>(this, AbilityEffect);
-		if (newEffect)
-			newEffect->InitObject(this);*/
 	}
 }
 

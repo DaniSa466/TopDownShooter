@@ -4,9 +4,15 @@
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/StaticMeshActor.h"
+#include "TopDownShooter/Character/TopDownShooterCharacter.h"
 #include "TopDownShooter/Character/InventoryComponent.h"
 #include "TopDownShooter/StateEffects/TPS_StatsEffects.h"
 #include "TopDownShooter/Game/TPS_GameActorsInterface.h"
+
+int32 debugWeaponShow = 0;
+FAutoConsoleVariableRef CVarWeaponShow(
+	TEXT("TPS.DebugWeapon"), debugWeaponShow,
+	TEXT("Draw Debug for Weapon"), ECVF_Cheat);
 
 // Sets default values
 AWeaponDefault::AWeaponDefault()
@@ -295,7 +301,7 @@ void AWeaponDefault::Fire()
 		}
 	}
 	else
-		if (!WeaponReloading)
+		if (!WeaponReloading && CheckWeaponCanBeReloaded())
 			InitReload();
 }
 
@@ -443,6 +449,12 @@ void AWeaponDefault::InitReload()
 			AnimToPlay = WeaponSettings.AnimWeaponInfo.AnimCharStandReload;
 		if (AnimToPlay)
 			OnWeaponReloadStart.Broadcast(AnimToPlay);
+		else
+			if (ATopDownShooterCharacter* pointerToCharacter = Cast<ATopDownShooterCharacter>(GetOwner()))
+			{
+				pointerToCharacter->WeaponReloadStart(AnimToPlay);
+				pointerToCharacter = nullptr;
+			}
 
 		UAnimMontage* AnimWeaponToPlay = nullptr;
 		if (WeaponAiming)
@@ -497,6 +509,30 @@ void AWeaponDefault::CancelReload()
 	DropClipFlag = false;
 }
 
+
+bool AWeaponDefault::CheckWeaponCanBeReloaded()
+{
+	bool result = true;
+	if (GetOwner())
+	{
+		UInventoryComponent* myInventory = Cast<UInventoryComponent>(GetOwner()->GetComponentByClass(UInventoryComponent::StaticClass()));
+		if (myInventory)
+		{
+			int16 avialableAmmoForWeapon;
+			if (!myInventory->CheckAmmoForWeapon(WeaponSettings.WeaponType, avialableAmmoForWeapon))
+			{
+				result = false;
+				myInventory->OnWeaponHasNoRound.Broadcast(myInventory->GetWeaponIndexSlotByName(CurrentWeaponName));
+			}
+			else
+			{
+				myInventory->OnWeaponHasRound.Broadcast(myInventory->GetWeaponIndexSlotByName(CurrentWeaponName));
+			}
+		}
+	}
+
+	return result;
+}
 
 int16 AWeaponDefault::GetAvialableAmmo()
 {

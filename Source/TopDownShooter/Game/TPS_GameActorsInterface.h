@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "TopDownShooter/StateEffects/TPS_StatsEffects.h"
+#include "TopDownShooter/FuncLibrary/Types.h"
 #include "TPS_GameActorsInterface.generated.h"
 
 // This class does not need to be modified.
@@ -23,11 +24,15 @@ class TOPDOWNSHOOTER_API ITPS_GameActorsInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-
+	//effects
 	virtual EPhysicalSurface GetSurfaceType();
-
 	virtual TArray<UTPS_StatsEffects*> GetCurrentEffects();
-
 	virtual void RemoveEffect(UTPS_StatsEffects* EffectToRemove);
 	virtual void AddEffect(UTPS_StatsEffects* EffectToAdd);
+
+	//drop
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void DropWeaponToWorld(FDropItem dropItemInfo);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void DropAmmoToWorld(EWeaponType ammoType, int32 count);
 };
