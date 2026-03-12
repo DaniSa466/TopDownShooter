@@ -8,7 +8,7 @@
 #include "TopDownShooter/Character/TPS_CharHealthComponent.h"
 #include "Kismet/GameplayStatics.h"
 
-bool UTPS_StatsEffects::InitObject(AActor* ActorToInit)
+bool UTPS_StatsEffects::InitObject(AActor* ActorToInit, FName hitBoneName)
 {
 	newActor = ActorToInit;
 
@@ -38,9 +38,9 @@ bool UTPS_StatsEffects::ChackStackableEffect()
 	return false;
 }
 
-bool UTPS_EffectExecuteOnce::InitObject(AActor* ActorToInit)
+bool UTPS_EffectExecuteOnce::InitObject(AActor* ActorToInit, FName hitBoneName)
 {
-	Super::InitObject(ActorToInit);
+	Super::InitObject(ActorToInit, hitBoneName);
 	ExecuteOnce();
 
 	return true;
@@ -65,9 +65,9 @@ void UTPS_EffectExecuteOnce::ExecuteOnce()
 	DestroyObject();
 }
 
-bool UTPS_TemporaryEffect::InitObject(AActor* ActorToInit)
+bool UTPS_TemporaryEffect::InitObject(AActor* ActorToInit, FName hitBoneName)
 {
-	Super::InitObject(ActorToInit);
+	Super::InitObject(ActorToInit, hitBoneName);
 
 	GetWorld()->GetTimerManager().SetTimer(EffectTimer, this, 
 		&UTPS_TemporaryEffect::DestroyObject, Timer, false);
@@ -76,11 +76,21 @@ bool UTPS_TemporaryEffect::InitObject(AActor* ActorToInit)
 
 	if (ParticleEffect)
 	{
-		FName BoneNameToAttachEffect;
+		FName BoneNameToAttachEffect = hitBoneName;
 		FVector Location;
-		ParticleEmitter = UGameplayStatics::SpawnEmitterAttached(ParticleEffect,
-			newActor->GetRootComponent(), BoneNameToAttachEffect, Location,
-			FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+		USceneComponent* myMesh = Cast<USceneComponent>(newActor->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
+		if (myMesh)
+		{
+			ParticleEmitter = UGameplayStatics::SpawnEmitterAttached(ParticleEffect,
+				myMesh, BoneNameToAttachEffect, Location,
+				FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+		}
+		else
+		{
+			ParticleEmitter = UGameplayStatics::SpawnEmitterAttached(ParticleEffect,
+				newActor->GetRootComponent(), BoneNameToAttachEffect, Location,
+				FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+		}
 	}
 
 	return true;
@@ -107,9 +117,9 @@ void UTPS_TemporaryEffect::Execute()
 	}
 }
 
-bool UTPS_SpeedUpEffect::InitObject(AActor* ActorToSpeedUp)
+bool UTPS_SpeedUpEffect::InitObject(AActor* ActorToSpeedUp, FName hitBoneName)
 {
-	Super::InitObject(ActorToSpeedUp);
+	Super::InitObject(ActorToSpeedUp, hitBoneName);
 	pointerToCharacter = Cast<ATopDownShooterCharacter>(ActorToSpeedUp);
 
 	if (!pointerToCharacter)
@@ -136,9 +146,9 @@ void UTPS_SpeedUpEffect::IncreaseSpeed()
 	pointerToCharacter->OnEnableSpeedUpEffect.Broadcast();
 }
 
-bool UTPS_EffectsToHealth::InitObject(AActor* actorToInit)
+bool UTPS_EffectsToHealth::InitObject(AActor* actorToInit, FName hitBoneName)
 {
-	Super::InitObject(actorToInit);
+	Super::InitObject(actorToInit, hitBoneName);
 	pointerToCharacter = Cast<ATopDownShooterCharacter>(actorToInit);
 
 	if (!pointerToCharacter)
@@ -208,9 +218,9 @@ void UTPS_EffectsToHealth::ChangeHealthCoef()
 	}
 }
 
-bool UTPS_StunEffect::InitObject(AActor* ActorToStun)
+bool UTPS_StunEffect::InitObject(AActor* ActorToStun, FName hitBoneName)
 {
-	Super::InitObject(ActorToStun);
+	Super::InitObject(ActorToStun, hitBoneName);
 	pointerToCharacter = Cast<ATopDownShooterCharacter>(ActorToStun);
 
 	if (!pointerToCharacter)

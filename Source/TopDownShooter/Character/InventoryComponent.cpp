@@ -21,25 +21,6 @@ UInventoryComponent::UInventoryComponent()
 void UInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//Find Init WeaponSlots and First Init Weapon
-	for (int8 i = 0; i < WeaponSlots.Num(); i++)
-	{
-		UTopDownShooterGameInstance* myGI = Cast<UTopDownShooterGameInstance>(GetWorld()->GetGameInstance());
-		if (myGI)
-			if (!WeaponSlots[i].NameItem.IsNone())
-			{
-				FWeaponInfo Info;
-				if (myGI->GetWeaponInfoByName(WeaponSlots[i].NameItem, Info))
-					WeaponSlots[i].AdditionalInfo.Round = Info.MaxRound;
-			}
-	}
-
-	MaxSlotsWeapon = WeaponSlots.Num(); 
-
-	if (WeaponSlots.IsValidIndex(0))
-		if (!WeaponSlots[0].NameItem.IsNone())
-			OnSwitchWeapon.Broadcast(WeaponSlots[0].NameItem, WeaponSlots[0].AdditionalInfo, 0);
 }
 
 
@@ -459,7 +440,7 @@ bool UInventoryComponent::TryGetWeaponToInventory(FWeaponSlot NewWeapon, bool &B
 	if (CheckCanTakeWeapon(IndexSlot) && !WeaponIsInInventory)
 	{
 		WeaponSlots[IndexSlot] = NewWeapon;
-		OnUpdateWeaponSlots.Broadcast(IndexSlot, NewWeapon);
+		OnUpdateWeaponSlots.Broadcast(IndexSlot, NewWeapon); 
 		CanTake = true;
 	}
 	return CanTake;
@@ -482,4 +463,39 @@ bool UInventoryComponent::GetDropItemFromInventory(int32 WeaponIndexToDrop, FDro
 	}
 
 	return result && bCanDrop;
+}
+
+TArray<FWeaponSlot> UInventoryComponent::GetWeaponSlots()
+{
+	return WeaponSlots;
+}
+
+TArray<FAmmoSlot> UInventoryComponent::GetAmmoSlots()
+{
+	return AmmoSlots;
+}
+
+void UInventoryComponent::InitInventory(TArray<FWeaponSlot> newWeaponSlotsInfo, TArray<FAmmoSlot> newAmmoSlotsInfo)
+{
+	WeaponSlots = newWeaponSlotsInfo;
+	AmmoSlots = newAmmoSlotsInfo;
+
+	//Find Init WeaponSlots and First Init Weapon
+	for (int8 i = 0; i < WeaponSlots.Num(); i++)
+	{
+		UTopDownShooterGameInstance* myGI = Cast<UTopDownShooterGameInstance>(GetWorld()->GetGameInstance());
+		if (myGI)
+			if (!WeaponSlots[i].NameItem.IsNone())
+			{
+				/*FWeaponInfo Info;
+				if (myGI->GetWeaponInfoByName(WeaponSlots[i].NameItem, Info))
+					WeaponSlots[i].AdditionalInfo.Round = Info.MaxRound;*/
+			}
+	}
+
+	MaxSlotsWeapon = WeaponSlots.Num();
+
+	if (WeaponSlots.IsValidIndex(0))
+		if (!WeaponSlots[0].NameItem.IsNone())
+			OnSwitchWeapon.Broadcast(WeaponSlots[0].NameItem, WeaponSlots[0].AdditionalInfo, 0);
 }

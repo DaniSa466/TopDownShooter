@@ -5,7 +5,7 @@
 #include "TopDownShooter/TopDownShooter.h"
 #include "TopDownShooter/Game/TPS_GameActorsInterface.h"
 
-void UTypes::AddEffectBySurfaceType(AActor* TakeEffectActor, TSubclassOf<UTPS_StatsEffects> AddEffectClass, EPhysicalSurface PhysSurface)
+void UTypes::AddEffectBySurfaceType(AActor* TakeEffectActor, FName hitBoneName, TSubclassOf<UTPS_StatsEffects> AddEffectClass, EPhysicalSurface PhysSurface)
 {
 	if (PhysSurface != EPhysicalSurface::SurfaceType_Default && TakeEffectActor && AddEffectClass)
 	{
@@ -51,7 +51,7 @@ void UTypes::AddEffectBySurfaceType(AActor* TakeEffectActor, TSubclassOf<UTPS_St
 						UTPS_StatsEffects* newEffect = NewObject<UTPS_StatsEffects>(TakeEffectActor, AddEffectClass);
 
 						if (newEffect)
-							newEffect->InitObject(TakeEffectActor);
+							newEffect->InitObject(TakeEffectActor, hitBoneName);
 					}
 				}
 				i++;

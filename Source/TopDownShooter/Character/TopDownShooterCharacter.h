@@ -230,6 +230,9 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void WeaponReloadEnd_BP(bool bIsSuccess);
 
+	UFUNCTION(BlueprintNativeEvent)
+	void CharDead_BP();
+
 	//Interface
 	EPhysicalSurface GetSurfaceType() override;
 	TArray<UTPS_StatsEffects*> GetCurrentEffects() override;

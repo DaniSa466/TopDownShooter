@@ -53,14 +53,13 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TArray<FWeaponSlot> WeaponSlots;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TArray<FAmmoSlot> AmmoSlots;
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapons")
-	TArray<FWeaponSlot> WeaponSlots;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapons")
-	TArray<FAmmoSlot> AmmoSlots;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapons")
 	int32 MaxSlotsWeapon = 0;
@@ -98,4 +97,12 @@ public:
 	void DropWeaponByIndex(int32 index, FDropItem& dropItemInfo);
 	UFUNCTION(BlueprintCallable, Category = "PickUpItems")
 	bool GetDropItemFromInventory(int32 WeaponIndexToDrop, FDropItem &DropItemInfo);
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	TArray<FWeaponSlot> GetWeaponSlots();
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	TArray<FAmmoSlot> GetAmmoSlots();
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void InitInventory(TArray<FWeaponSlot> newWeaponSlotsInfo, TArray<FAmmoSlot> newAmmoSlotsInfo);
 };

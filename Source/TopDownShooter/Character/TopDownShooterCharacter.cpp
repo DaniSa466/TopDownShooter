@@ -182,7 +182,8 @@ void ATopDownShooterCharacter::InputAxisY(float Value)
 
 void ATopDownShooterCharacter::InputAttackPressed()
 {
-	AttackCharEvent(true);
+	if (IsAlive)
+		AttackCharEvent(true);
 }
 
 void ATopDownShooterCharacter::InputAttackReleased()
@@ -192,7 +193,7 @@ void ATopDownShooterCharacter::InputAttackReleased()
 
 void ATopDownShooterCharacter::TryReloadWeapon()
 {
-	if (CurrentWeapon && !CurrentWeapon->WeaponReloading)
+	if (IsAlive && CurrentWeapon && !CurrentWeapon->WeaponReloading)
 		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSettings.MaxRound)
 			CurrentWeapon->InitReload();
 }
@@ -472,7 +473,7 @@ void ATopDownShooterCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponI
 bool ATopDownShooterCharacter::TrySwitchWeaponToIndexByKeyInput(int32 index)
 {
 	bool isSuccess = false;
-	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlots.IsValidIndex(index))
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->GetWeaponSlots().IsValidIndex(index))
 	{
 		if (CurrentIndexWeapon != index)
 		{
@@ -535,6 +536,11 @@ void ATopDownShooterCharacter::WeaponReloadEnd_BP_Implementation(bool bIsSuccess
 	//In BluePrints
 }
 
+void ATopDownShooterCharacter::CharDead_BP_Implementation()
+{
+	//In Blueprints
+}
+
 UDecalComponent* ATopDownShooterCharacter::GetCursorToWorld()
 {
 	return CurrentCursor;
@@ -542,7 +548,7 @@ UDecalComponent* ATopDownShooterCharacter::GetCursorToWorld()
 
 void ATopDownShooterCharacter::SwitchNextWeapon()
 {
-	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlots.Num() > 1)
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->GetWeaponSlots().Num() > 1)
 	{
 		FAdditionalWeaponInfo OldInfo;
 
@@ -556,7 +562,7 @@ void ATopDownShooterCharacter::SwitchNextWeapon()
 
 void ATopDownShooterCharacter::SwitchPreviousWeapon()
 {
-	if (CurrentWeapon && !CurrentWeapon->WeaponReloading &&  InventoryComponent->WeaponSlots.Num() > 1)
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading &&  InventoryComponent->GetWeaponSlots().Num() > 1)
 	{
 		FAdditionalWeaponInfo OldInfo;
 
@@ -572,7 +578,7 @@ void ATopDownShooterCharacter::TryAbilityEnabled()
 {
 	if (AbilityEffect)
 	{
-		UTypes::AddEffectBySurfaceType(this, AbilityEffect, EPhysicalSurface::SurfaceType3);
+		UTypes::AddEffectBySurfaceType(this, NAME_None, AbilityEffect, EPhysicalSurface::SurfaceType3);
 	}
 }
 
@@ -622,10 +628,16 @@ void ATopDownShooterCharacter::CharDead()
 	}
 	
 	IsAlive = false;
-	UnPossessed();
 	
+	if (GetController())
+		GetController()->UnPossess();
+
 	GetWorldTimerManager().SetTimer(RagDollTimer, this, &ATopDownShooterCharacter::EnableRagDoll, AnimTime, false);
 	GetCursorToWorld()->SetVisibility(false);
+
+	AttackCharEvent(false);
+
+	CharDead_BP();
 }
 
 void ATopDownShooterCharacter::EnableRagDoll()
@@ -654,7 +666,7 @@ float ATopDownShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent cons
 		AProjectileDefault* MyProjectile = Cast<AProjectileDefault>(DamageCauser);
 		if (MyProjectile)
 		{
-			UTypes::AddEffectBySurfaceType(this, MyProjectile->ProjectileSetting.Effect, GetSurfaceType());
+			UTypes::AddEffectBySurfaceType(this, NAME_None, MyProjectile->ProjectileSetting.Effect, GetSurfaceType()); //to do NAME_None - bone for radial damage
 		}
 	}
 

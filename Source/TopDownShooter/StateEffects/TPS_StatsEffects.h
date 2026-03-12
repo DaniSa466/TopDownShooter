@@ -28,7 +28,7 @@ public:
 
 	AActor* newActor = nullptr;
 
-	virtual bool InitObject(AActor* ActorToInit);
+	virtual bool InitObject(AActor* ActorToInit, FName hitBoneName);
 	virtual void DestroyObject();
 
 	virtual bool ChackStackableEffect();
@@ -44,7 +44,7 @@ protected:
 	float Power = 20.f;
 
 public:
-	bool InitObject(AActor* ActorToInit) override;
+	bool InitObject(AActor* ActorToInit, FName hitBoneName) override;
 	void DestroyObject() override;
 	void ExecuteOnce();
 };
@@ -71,7 +71,7 @@ protected:
 	UParticleSystemComponent* ParticleEmitter = nullptr;
 
 public:
-	bool InitObject(AActor* ActorToInit) override;
+	bool InitObject(AActor* ActorToInit, FName hitBoneName) override;
 	void DestroyObject() override;
 	void Execute();
 };
@@ -91,7 +91,7 @@ protected:
 	FTimerHandle decreaseTimer;
 
 public:
-	bool InitObject(AActor* ActorToSpeedUp) override;
+	bool InitObject(AActor* ActorToSpeedUp, FName hitBoneName) override;
 	void DestroyObject() override;
 	void IncreaseSpeed();
 };
@@ -116,7 +116,7 @@ protected:
 	FTimerHandle backTimer;
 
 public:
-	bool InitObject(AActor* actorToInit) override;
+	bool InitObject(AActor* actorToInit, FName hitBoneName) override;
 	void DestroyObject() override;
 	void ChangeHealthCoef();
 };
@@ -140,7 +140,7 @@ protected:
 	FTimerHandle stunTimer;
 
 public:
-	bool InitObject(AActor* ActorToStun) override;
+	bool InitObject(AActor* ActorToStun, FName hitBoneName) override;
 	void DestroyObject() override;
 	void ChangeCharacterInputStatus(bool isStun);
 };

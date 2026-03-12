@@ -290,7 +290,7 @@ void AWeaponDefault::Fire()
 							UGameplayStatics::PlaySoundAtLocation(GetWorld(), 
 								WeaponSettings.ProjectileSetting.HitSound, Hit.ImpactPoint);
 
-						UTypes::AddEffectBySurfaceType(Hit.GetActor(), ProjectileInfo.Effect, mySurfaceType);
+						UTypes::AddEffectBySurfaceType(Hit.GetActor(), Hit.BoneName, ProjectileInfo.Effect, mySurfaceType);
 
 						UGameplayStatics::ApplyPointDamage(Hit.GetActor(),
 							WeaponSettings.ProjectileSetting.ProjectileDamage,
