@@ -1,6 +1,7 @@
 #include "ProjectileDefault.h"
 #include "Kismet/GameplayStatics.h"
 #include "TopDownShooter/Game/TPS_GameActorsInterface.h"
+#include "Perception/AISense_Damage.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 
 // Sets default values
@@ -115,6 +116,9 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp,
 	}
 
 	UGameplayStatics::ApplyPointDamage(OtherActor, ProjectileSetting.ProjectileDamage, Hit.TraceStart, Hit, GetInstigatorController(), this, NULL);
+	UAISense_Damage::ReportDamageEvent(GetWorld(), Hit.GetActor(), GetInstigator(), 
+		ProjectileSetting.ProjectileDamage, Hit.Location, Hit.Location); // todo shootgun trace, grenade
+
 	ImpactProjectile();
 }
 

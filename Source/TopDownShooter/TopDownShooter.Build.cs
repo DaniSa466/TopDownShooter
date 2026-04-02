@@ -10,6 +10,6 @@ public class TopDownShooter : ModuleRules
 
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", 
 															"InputCore", "HeadMountedDisplay", "NavigationSystem", 
-															"AIModule", "PhysicsCore", "Slate"});
+															"AIModule", "PhysicsCore", "Slate", "AIModule", "GameplayTasks"});
     }
 }
