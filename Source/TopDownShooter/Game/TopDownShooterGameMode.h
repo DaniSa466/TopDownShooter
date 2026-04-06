@@ -6,7 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "TopDownShooterGameMode.generated.h"
 
-UCLASS(minimalapi)
+UCLASS(MinimalAPI)
 class ATopDownShooterGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
