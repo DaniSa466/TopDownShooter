@@ -59,6 +59,12 @@ struct FProjectileInfo
 	TSubclassOf<class AProjectileDefault> Projectile = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
+	UStaticMesh* projectileStaticMesh = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
+	FTransform projectileStaticMeshOffset = FTransform();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
 	UParticleSystem* ProjectileTrialFX = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
 	FTransform ProjectileTrialFXOffset = FTransform();
@@ -69,6 +75,8 @@ struct FProjectileInfo
 	float ProjectileLifeTime = 20.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
 	float ProjectileInitSpeed = 2000.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
+	float ProjectileMaxSpeed = 2000.f;
 
 	//material to decal on hit
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FX")

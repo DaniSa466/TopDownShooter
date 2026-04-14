@@ -154,7 +154,7 @@ bool UTPS_EffectsToHealth::InitObject(AActor* actorToInit, FName hitBoneName)
 	if (!pointerToCharacter)
 		return false;
 
-	pointerToHealthComponent = pointerToCharacter->GetHealthComponent();
+	pointerToHealthComponent = pointerToCharacter->HealthComponent;
 	if (!pointerToHealthComponent)
 		return false;
 
@@ -169,7 +169,7 @@ void UTPS_EffectsToHealth::DestroyObject()
 	//resist to damage effect
 	if (healthCoef == 0)
 	{
-		pointerToCharacter->SetResistToDamage(false);
+		pointerToCharacter->HealthComponent->ChangeResistToDamage();
 
 		if (ParticleEmitter)
 		{
@@ -191,7 +191,7 @@ void UTPS_EffectsToHealth::ChangeHealthCoef()
 	//resist to damage effect
 	if (healthCoef == 0)
 	{
-		pointerToCharacter->SetResistToDamage(true);
+		pointerToCharacter->HealthComponent->ChangeResistToDamage();
 
 		USkeletalMeshComponent* characterMesh = pointerToCharacter->GetMesh();
 		if (ParticleEffect && characterMesh)

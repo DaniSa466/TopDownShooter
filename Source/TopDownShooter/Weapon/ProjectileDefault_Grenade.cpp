@@ -66,7 +66,8 @@ void AProjectileDefault_Grenade::Explose()
 	TArray<AActor*> IgnoreActor;
 	UGameplayStatics::ApplyRadialDamageWithFalloff(GetWorld(),
 		ProjectileSetting.ExplodeMaxDamage, ProjectileSetting.ExplodeMaxDamage * 0.2f,
-		GetActorLocation(), 1000.f, 2000.f, 5,
+		GetActorLocation(), ProjectileSetting.ProjectileMinRadiusDamage, 
+		ProjectileSetting.ProjectileMaxRadiusDamage, 5,
 		NULL, IgnoreActor, this, nullptr, ECC_Visibility);
 	UE_LOG(LogTemp, Warning, TEXT("AProjectileDefault_Grenade::Explose - MaxDamage = %f, MinDamage = %f"),
 		ProjectileSetting.ExplodeMaxDamage, ProjectileSetting.ExplodeMaxDamage * 0.2f);

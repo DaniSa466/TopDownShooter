@@ -102,7 +102,6 @@ private:
 
 	//coef for effects
 	float speedUpCoef = 1.f;
-	bool resistToDamage = false;
 
 public:
 	//delegates
@@ -138,15 +137,11 @@ public:
 	float ResSpeed = 600.f;
 	
 	int deviation;
-
 	double DeviationCos;
-
 	double DeviationRad;
-
 	bool NormalDeviation;
 
 	FVector LookingDirection;
-
 	FVector MovingDirection;
 
 	//Health variables
@@ -166,12 +161,6 @@ public:
 	//getters and setters for effects
 	void SetSpeedCoef(float newCoef = 1.f);
 
-	UFUNCTION()
-	void SetResistToDamage(bool resist = false);
-
-	UFUNCTION(BlueprintCallable)
-	bool GetResistToDamage();
-
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	UDecalComponent* GetCursorToWorld();
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -183,8 +172,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	int32 GetCurrentWeaponIndex();
 	//end getters and setters for effects
-
-	UTPS_CharHealthComponent* GetHealthComponent();
 
 	UFUNCTION(BlueprintCallable)
 	void TryReloadWeapon();

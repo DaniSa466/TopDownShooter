@@ -153,23 +153,6 @@ void ATopDownShooterCharacter::SetSpeedCoef(float newCoef)
 	speedUpCoef = newCoef;
 }
 
-void ATopDownShooterCharacter::SetResistToDamage(bool immune)
-{
-	resistToDamage = immune;
-}
-
-bool ATopDownShooterCharacter::GetResistToDamage()
-{
-	return resistToDamage;
-}
-
-UTPS_CharHealthComponent* ATopDownShooterCharacter::GetHealthComponent()
-{
-	return HealthComponent;
-}
-
-
-
 void ATopDownShooterCharacter::InputAxisX(float Value)
 {
 	AxisX = Value;
@@ -657,7 +640,7 @@ float ATopDownShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent cons
 
 	if (IsAlive)
 	{
-		if (!resistToDamage)
+		if (!HealthComponent->GetResistToDamage())
 			HealthComponent->ChangeCurrentHealth(-DamageAmount);
 	}
 
