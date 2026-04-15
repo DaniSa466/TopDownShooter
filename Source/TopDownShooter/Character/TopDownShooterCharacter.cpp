@@ -392,6 +392,11 @@ int32 ATopDownShooterCharacter::GetCurrentWeaponIndex()
 	return CurrentIndexWeapon;
 }
 
+bool ATopDownShooterCharacter::GetIsAlive()
+{
+	return IsAlive;
+}
+
 void ATopDownShooterCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo AdditionalWeaponInfo, int32 NewCurrentIndexWeapon)
 {
 	if (CurrentWeapon)

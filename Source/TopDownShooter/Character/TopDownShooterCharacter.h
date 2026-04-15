@@ -171,6 +171,8 @@ public:
 	TArray<UTPS_StatsEffects*> GetCurrentEffectsOnChar();
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	int32 GetCurrentWeaponIndex();
+	UFUNCTION(BlueprintCallable)
+	bool GetIsAlive();
 	//end getters and setters for effects
 
 	UFUNCTION(BlueprintCallable)
