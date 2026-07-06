@@ -24,44 +24,38 @@ void AProjectileDefault_Grenade::Tick(float DeltaTime)
 
 void AProjectileDefault_Grenade::TimerExplose(float DeltaTime)
 {
+	// On server
 	if (TimerEnabled)
 	{
 		if (TimerToExplose > TimeToExplose)
-			Explose();
+			Explose_OnServer();
 		else
 			TimerToExplose += DeltaTime;
 	}
 }
 
-void AProjectileDefault_Grenade::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void AProjectileDefault_Grenade::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
+	AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, 
+	const FHitResult& Hit)
 {
 	Super::BulletCollisionSphereHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
 }
 
 void AProjectileDefault_Grenade::ImpactProjectile()
 {
-	TimerEnabled = true;
+	if (!TimerEnabled)
+		TimerEnabled = true;
 }
 
-void AProjectileDefault_Grenade::Explose()
+void AProjectileDefault_Grenade::Explose_OnServer_Implementation()
 {
-	if (DebugExplosionShow)
-	{
-		DrawDebugSphere(GetWorld(), GetActorLocation(),
-			ProjectileSetting.ProjectileMinRadiusDamage, 12,
-			FColor::Green, false, 12.f);
-		DrawDebugSphere(GetWorld(), GetActorLocation(),
-			ProjectileSetting.ProjectileMaxRadiusDamage, 12,
-			FColor::Red, false, 12.f);
-	}
+	// On Server
 
 	TimerEnabled = false;
-	if (ProjectileSetting.ExplosionFX)
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ProjectileSetting.ExplosionFX, 
-			GetActorLocation(), GetActorRotation(), FVector(1.f));
-	if (ProjectileSetting.ExplosionSound)
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ProjectileSetting.ExplosionSound, 
-			GetActorLocation());
+
+	ExploseVisual_Multicast(ProjectileSetting.ProjectileMinRadiusDamage,
+		ProjectileSetting.ProjectileMaxRadiusDamage, ProjectileSetting.ExplosionFX,
+		ProjectileSetting.ExplosionSound);
 
 	TArray<AActor*> IgnoreActor;
 	UGameplayStatics::ApplyRadialDamageWithFalloff(GetWorld(),
@@ -72,5 +66,31 @@ void AProjectileDefault_Grenade::Explose()
 	UE_LOG(LogTemp, Warning, TEXT("AProjectileDefault_Grenade::Explose - MaxDamage = %f, MinDamage = %f"),
 		ProjectileSetting.ExplodeMaxDamage, ProjectileSetting.ExplodeMaxDamage * 0.2f);
 
+	DestroyGrenade_Multicast();
+}
+
+void AProjectileDefault_Grenade::ExploseVisual_Multicast_Implementation(float minRadius, float maxRadius, 
+	UParticleSystem* explosionFX, USoundBase* explosionSound)
+{
+	if (DebugExplosionShow)
+	{
+		DrawDebugSphere(GetWorld(), GetActorLocation(),
+			minRadius, 12,
+			FColor::Green, false, 12.f);
+		DrawDebugSphere(GetWorld(), GetActorLocation(),
+			maxRadius, 12,
+			FColor::Red, false, 12.f);
+	}
+
+	if (explosionFX)
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), explosionFX,
+			GetActorLocation(), GetActorRotation(), FVector(1.f));
+	if (explosionSound)
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), explosionSound,
+			GetActorLocation());
+}
+
+void AProjectileDefault_Grenade::DestroyGrenade_Multicast_Implementation()
+{
 	this->Destroy();
 }

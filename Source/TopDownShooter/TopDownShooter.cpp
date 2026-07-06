@@ -6,4 +6,5 @@
 IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, TopDownShooter, "TopDownShooter" );
 
 DEFINE_LOG_CATEGORY(LogTopDownShooter)
+DEFINE_LOG_CATEGORY(LogTopDownShooter_Network)
  

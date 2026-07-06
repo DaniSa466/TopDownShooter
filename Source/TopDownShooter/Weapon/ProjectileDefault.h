@@ -40,7 +40,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable)
-	void InitProjectile(FProjectileInfo InitParam);
+	bool InitProjectile(FProjectileInfo InitParam);
 
 	UFUNCTION()
 	virtual void BulletCollisionSphereHit(
@@ -68,4 +68,15 @@ public:
 
 	UFUNCTION()
 	virtual void ImpactProjectile();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void InitVisualMeshProjectile_Multicast(UStaticMesh* newMesh, FTransform meshRelative);
+	UFUNCTION(NetMulticast, Reliable)
+	void InitVisualTrailProjectile_Multicast(UParticleSystem* newFX, FTransform fxRelative);
+	UFUNCTION(NetMulticast, Reliable)
+	void SpawnHitDecal_Multicast(UMaterialInterface* newDecalMaterial, UPrimitiveComponent* otherComponent, FHitResult hitResult);
+	UFUNCTION(NetMulticast, Reliable)
+	void SpawnHitFX_Multicast(UParticleSystem* fxTemplate, FHitResult hitResult);
+	UFUNCTION(NetMulticast, Reliable)
+	void SpawnHitSound_Multicast(USoundBase* hitSound, FHitResult hitResult);
 };

@@ -22,11 +22,20 @@ public:
 
 	void TimerExplose(float DeltaTime);
 
-	virtual void BulletCollisionSphereHit(class UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
+	virtual void BulletCollisionSphereHit(class UPrimitiveComponent* HitComp, 
+		AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, 
+		const FHitResult& Hit) override;
 
 	virtual void ImpactProjectile() override;
 
-	void Explose();
+	UFUNCTION(Server, Reliable)
+	void Explose_OnServer();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void ExploseVisual_Multicast(float minRadius, float maxRadius, 
+		UParticleSystem* explosionFX, USoundBase* explosionSound);
+	UFUNCTION(NetMulticast, Reliable)
+	void DestroyGrenade_Multicast();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grenade")
 	bool TimerEnabled = false;

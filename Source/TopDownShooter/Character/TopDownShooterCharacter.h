@@ -37,9 +37,10 @@ protected:
 	bool AimEnabled = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	bool SprintRunEnabled = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	EMovementState MovementState = EMovementState::Stand_State;
-	
+	UPROPERTY(Replicated)
 	AWeaponDefault* CurrentWeapon = nullptr;
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 	int32 CurrentIndexWeapon = 0;
@@ -227,4 +228,19 @@ public:
 	TArray<UTPS_StatsEffects*> GetCurrentEffects() override;
 	void RemoveEffect(UTPS_StatsEffects* EffectToRemove) override;
 	void AddEffect(UTPS_StatsEffects* EffectToAdd) override;
+
+	//Multyplayer
+	UFUNCTION(Server, Unreliable)
+	void SetActorRotationByYaw_OnServer(float yaw);
+	UFUNCTION(NetMulticast, Unreliable)
+	void SetActorRotationByYaw_Multicast(float yaw);
+
+	UFUNCTION(Server, Reliable)
+	void SetMovementState_OnServer(EMovementState newState);
+	UFUNCTION(NetMulticast, Reliable)
+	void SetMovementState_Multicast(EMovementState newState);
+	UFUNCTION(Server, Reliable)
+	void TryreloadWeapon_OnServer();
+
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

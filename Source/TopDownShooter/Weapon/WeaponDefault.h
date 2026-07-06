@@ -37,7 +37,7 @@ public:
 
 	UPROPERTY()
 	FWeaponInfo WeaponSettings;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Info")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Weapon Info")
 	FAdditionalWeaponInfo AdditionalWeaponInfo;
 
 protected:
@@ -64,12 +64,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLogic")
 	bool WeaponFiring = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReloadLogic")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "ReloadLogic")
 	bool WeaponReloading = false;
 	bool WeaponAiming = false;
 
-	UFUNCTION(BlueprintCallable)
-	void SetWeaponStateFire(bool bIsFire);
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void SetWeaponStateFire_OnServer(bool bIsFire);
 
 	bool CheckWeaponCanFire();
 
@@ -77,7 +77,8 @@ public:
 
 	void Fire();
 
-	void UpdateStateWeapon(EMovementState NewMovementState);
+	UFUNCTION(Server, Reliable)
+	void UpdateStateWeapon_OnServer(EMovementState NewMovementState);
 	void ChangeDispersionByShoot();
 	float GetCurrentDispersion() const;
 	FVector ApplyDispersionToShoot(FVector DirectionShoot) const;
@@ -119,6 +120,7 @@ public:
 	float CurrentDispersionRecoil = 0.1f;
 	float CurrentDispersionReduction = 0.1f;
 
+	UPROPERTY(Replicated)
 	FVector ShootEndLocation = FVector(0);
 
 	//Drop Meshes
@@ -127,12 +129,37 @@ public:
 	bool DropShellFlag = false;
 	float DropShellTimer = -1.f;
 
-	UFUNCTION()
-	void InitDropMesh(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection,
+	UFUNCTION(Server, Reliable)
+	void InitDropMesh_OnServer(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection,
 		float LifeTimeMesh, float ImpulseRandomDispersion, float PowerImpuls, float CustomMass);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 	bool ShowDebug = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 	float SizeVectorToChangeShootDirectionLogic = 100.f;
+
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	//void AWeaponDefault::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	UFUNCTION(Server, Unreliable)
+	void UpdateWeaponByCharacterMovementState_OnServer(FVector newShootEndLocation, bool newShouldReduceDispersion);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void WeaponAnimationStart_Multicast(UAnimMontage* newAnim);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void ShellDropFire_Multicast(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection,
+		float LifeTimeMesh, float ImpulseRandomDispersion, float PowerImpuls, float CustomMass, FVector localDirection);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void SoundAndFXWeaponFire_Multicast(UParticleSystem* fireFX, USoundBase* fireSound);
+
+	UFUNCTION(Server, Reliable)
+	void InitTrace_OnServer(FVector spawnLocation, FVector endLocation);
+	UFUNCTION(NetMulticast, Unreliable)
+	void InitTrace_Multicast(FVector_NetQuantize spawnLocation, FVector endLocation);
+	UFUNCTION(NetMulticast, Unreliable)
+	void InitEffectsByTraceHit_Multicast(FVector_NetQuantize impactPoint,
+		FVector_NetQuantizeNormal impactNormal, EPhysicalSurface surfaceType, UPrimitiveComponent* component,
+		UMaterialInterface* myMaterial, UParticleSystem* myParticle, USoundBase* hitSound);
 };

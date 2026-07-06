@@ -20,6 +20,8 @@
 #include "Materials/Material.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Engine/World.h"
+#include "TopDownShooter/TopDownShooter.h"
+#include "Net/UnrealNetwork.h"
 
 ATopDownShooterCharacter::ATopDownShooterCharacter()
 {
@@ -62,6 +64,9 @@ ATopDownShooterCharacter::ATopDownShooterCharacter()
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+
+	//NetWork
+	bReplicates = true;
 }
 
 void ATopDownShooterCharacter::Tick(float DeltaSeconds)
@@ -76,7 +81,7 @@ void ATopDownShooterCharacter::Tick(float DeltaSeconds)
 	if(CurrentCursor)
 	{
 		APlayerController* myPC = Cast<APlayerController>(GetController());
-		if (myPC)
+		if (myPC && myPC->IsLocalPlayerController())
 		{
 			FHitResult TraceHitResult;
 			myPC->GetHitResultUnderCursor(ECC_Visibility, true, TraceHitResult);
@@ -93,9 +98,15 @@ void ATopDownShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (CursorMaterial)
+	if (GetController() && GetController()->IsLocalPlayerController())
+		SetOwner(GetController());
+
+	if (GetWorld() && GetWorld()->GetNetMode() != NM_DedicatedServer)
 	{
-		CurrentCursor = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), CursorMaterial, CursorSize, FVector(0));
+		if (CursorMaterial && (GetLocalRole() == ROLE_AutonomousProxy || GetLocalRole() == ROLE_Authority))
+		{
+			CurrentCursor = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), CursorMaterial, CursorSize, FVector(0));
+		}
 	}
 }
 
@@ -177,8 +188,7 @@ void ATopDownShooterCharacter::InputAttackReleased()
 void ATopDownShooterCharacter::TryReloadWeapon()
 {
 	if (IsAlive && CurrentWeapon && !CurrentWeapon->WeaponReloading)
-		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSettings.MaxRound)
-			CurrentWeapon->InitReload();
+		TryreloadWeapon_OnServer();
 }
 
 void ATopDownShooterCharacter::AttackCharEvent(bool bIsFiring)
@@ -186,7 +196,7 @@ void ATopDownShooterCharacter::AttackCharEvent(bool bIsFiring)
 	AWeaponDefault* myWeapon = nullptr;
 	myWeapon = GetCurrentWeapon();
 	if (myWeapon)
-		myWeapon->SetWeaponStateFire(bIsFiring);
+		myWeapon->SetWeaponStateFire_OnServer(bIsFiring);
 
 	else
 		UE_LOG(LogTemp, Warning, TEXT("ATopDownShooterCharacter::AttackCharEvent - CurrentWeapon - NULL"));
@@ -196,57 +206,69 @@ void ATopDownShooterCharacter::MovementTick(float DeltaTime)
 {
 	if (IsAlive)
 	{
-		AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
-		AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
-
-		APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-
-		if (MyController)
+		if (GetController() && GetController()->IsLocalController())
 		{
-			FHitResult ResultHit;
-			MyController->GetHitResultUnderCursor(ECC_GameTraceChannel1, true, ResultHit);
+			AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
+			AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
 
-			float FindRotatorResultYaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ResultHit.Location).Yaw;
-			SetActorRotation(FQuat(FRotator(0.0f, FindRotatorResultYaw, 0.0f)));
+			/*FString SEnum = UEnum::GetValueAsString(GetMovementState());
+			UE_LOG(LogTopDownShooter_Network, Warning, TEXT("Movement State - %s"), *SEnum);*/
 
-			if (CurrentWeapon)
+			APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+			if (MyController)
 			{
-				FVector Displacement = FVector(0);
-				switch (MovementState)
-				{
-				case EMovementState::Stand_State:
-					Displacement = FVector(0.f, 0.f, 120.f);
-					break;
-				case EMovementState::AimStand_State:
-					Displacement = FVector(0.f, 0.f, 160.f);
-					break;
-				case EMovementState::Aim_State:
-					Displacement = FVector(0.f, 0.f, 160.f);
-					break;
-				case EMovementState::AimWalk_State:
-					Displacement = FVector(0.f, 0.f, 160.f);
-					break;
-				case EMovementState::Walk_State:
-					Displacement = FVector(0.f, 0.f, 120.f);
-					break;
-				case EMovementState::Run_State:
-					Displacement = FVector(0.f, 0.f, 120.f);
-					break;
-				case EMovementState::SprintRun_State:
-					break;
-				default:
-					break;
-				}
+				FHitResult ResultHit;
+				MyController->GetHitResultUnderCursor(ECC_GameTraceChannel1, true, ResultHit);
 
-				CurrentWeapon->ShootEndLocation = ResultHit.Location + Displacement;
+				float FindRotatorResultYaw = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), ResultHit.Location).Yaw;
+
+				SetActorRotation(FQuat(FRotator(0.0f, FindRotatorResultYaw, 0.0f)));
+				SetActorRotationByYaw_OnServer(FindRotatorResultYaw);
+
+				if (CurrentWeapon)
+				{
+					FVector Displacement = FVector(0);
+
+					switch (MovementState)
+					{
+					case EMovementState::Stand_State:
+						Displacement = FVector(0.f, 0.f, 120.f);
+						break;
+					case EMovementState::AimStand_State:
+						Displacement = FVector(0.f, 0.f, 160.f);
+						break;
+					case EMovementState::Aim_State:
+						Displacement = FVector(0.f, 0.f, 160.f);
+						break;
+					case EMovementState::AimWalk_State:
+						Displacement = FVector(0.f, 0.f, 160.f);
+						break;
+					case EMovementState::Walk_State:
+						Displacement = FVector(0.f, 0.f, 120.f);
+						break;
+					case EMovementState::Run_State:
+						Displacement = FVector(0.f, 0.f, 120.f);
+						break;
+					case EMovementState::SprintRun_State:
+						break;
+					default:
+						break;
+					}
+
+					bool bIsReducingDispersion;
+					if (FMath::IsNearlyZero(GetVelocity().Size(), 0.5f))
+						bIsReducingDispersion = true;
+						//CurrentWeapon->ShouldReduceDispersion = true; del
+					else
+						bIsReducingDispersion = false;
+						//CurrentWeapon->ShouldReduceDispersion = false; del
+					
+					CurrentWeapon->UpdateWeaponByCharacterMovementState_OnServer(ResultHit.Location + Displacement, bIsReducingDispersion);
+					//CurrentWeapon->ShootEndLocation = ResultHit.Location + Displacement; del
+				}
 			}
 		}
-
-		if (CurrentWeapon)
-			if (FMath::IsNearlyZero(GetVelocity().Size(), 0.5f))
-				CurrentWeapon->ShouldReduceDispersion = true;
-			else
-				CurrentWeapon->ShouldReduceDispersion = false;
 	}
 }
 
@@ -278,10 +300,12 @@ void ATopDownShooterCharacter::CharacterUpdate()
 
 void ATopDownShooterCharacter::ChangeMovementState()
 {
+	EMovementState newState = EMovementState::Run_State;
+
 	if (AxisX != 0 || AxisY != 0)
 	{
 		if (!WalkEnabled && !SprintRunEnabled && !AimEnabled)
-			MovementState = EMovementState::Run_State;
+			newState = EMovementState::Run_State;
 
 		else
 		{
@@ -291,22 +315,22 @@ void ATopDownShooterCharacter::ChangeMovementState()
 				{
 					WalkEnabled = false;
 					AimEnabled = false;
-					MovementState = EMovementState::SprintRun_State;
+					newState = EMovementState::SprintRun_State;
 				}
 				else
 					SprintRunEnabled = false;
-			}
+			}	
 
 			else if (WalkEnabled && !SprintRunEnabled && AimEnabled)
-				MovementState = EMovementState::AimWalk_State;
+				newState = EMovementState::AimWalk_State;
 
 			else
 			{
 				if (WalkEnabled && !SprintRunEnabled && !AimEnabled)
-					MovementState = EMovementState::Walk_State;
+					newState = EMovementState::Walk_State;
 
 				else
-					MovementState = EMovementState::Aim_State;
+					newState = EMovementState::Aim_State;
 			}
 		}
 	}
@@ -314,20 +338,21 @@ void ATopDownShooterCharacter::ChangeMovementState()
 	else
 	{
 		if (AimEnabled)
-			MovementState = EMovementState::AimStand_State;
+			newState = EMovementState::AimStand_State;
 		else
-			MovementState = EMovementState::Stand_State;
+			newState = EMovementState::Stand_State;
 	}
 
-	CharacterUpdate();
+	//del log after debuging
+	UE_LOG(LogTemp, Warning, TEXT("ChangeMovementState: Client=%d, Role=%d, newState=%s"),
+		GetNetMode() != NM_DedicatedServer, GetLocalRole(), *UEnum::GetValueAsString(newState));
+	SetMovementState_OnServer(newState);
 
 	//Weapon state update
 	AWeaponDefault* myWeapon = GetCurrentWeapon();
 	if (myWeapon)
-		myWeapon->UpdateStateWeapon(MovementState);
+		myWeapon->UpdateStateWeapon_OnServer(newState);
 }
-
-
 
 //Function which controls character's stamina and doesn't let him Sprint for a long time
 void ATopDownShooterCharacter::StaminaSystem(EMovementState State)
@@ -399,6 +424,7 @@ bool ATopDownShooterCharacter::GetIsAlive()
 
 void ATopDownShooterCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo AdditionalWeaponInfo, int32 NewCurrentIndexWeapon)
 {
+	//On Server
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->Destroy();
@@ -432,7 +458,7 @@ void ATopDownShooterCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponI
 					MyWeapon->WeaponSettings = MyWeaponInfo;
 
 					MyWeapon->ReloadTime = MyWeaponInfo.ReloadTime;
-					MyWeapon->UpdateStateWeapon(MovementState);
+					MyWeapon->UpdateStateWeapon_OnServer(MovementState);
 
 					MyWeapon->AdditionalWeaponInfo = AdditionalWeaponInfo;
 
@@ -659,4 +685,46 @@ float ATopDownShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent cons
 	}
 
 	return ActualDamage;
+}
+
+void ATopDownShooterCharacter::SetActorRotationByYaw_OnServer_Implementation(float yaw)
+{
+	SetActorRotationByYaw_Multicast(yaw);
+}
+
+void ATopDownShooterCharacter::SetActorRotationByYaw_Multicast_Implementation(float yaw)
+{
+	//if (Controller && !Controller->IsLocalPlayerController())
+	SetActorRotation(FQuat(FRotator(0.0f, yaw, 0.0f)));
+}
+
+void ATopDownShooterCharacter::SetMovementState_OnServer_Implementation(EMovementState newState)
+{
+	//del after debuging
+	UE_LOG(LogTemp, Warning, TEXT("OnServer: Role=%d, newState=%s"),
+		GetLocalRole(), *UEnum::GetValueAsString(newState));
+	SetMovementState_Multicast(newState);
+}
+
+void ATopDownShooterCharacter::SetMovementState_Multicast_Implementation(EMovementState newState)
+{
+	//del after debuging
+	UE_LOG(LogTemp, Warning, TEXT("Multicast: Role=%d, newState=%s"),
+		GetLocalRole(), *UEnum::GetValueAsString(newState));
+	MovementState = newState;
+	CharacterUpdate();
+}
+
+void ATopDownShooterCharacter::TryreloadWeapon_OnServer_Implementation()
+{
+	if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSettings.MaxRound)
+		CurrentWeapon->InitReload();
+}
+
+void ATopDownShooterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ATopDownShooterCharacter, MovementState);
+	DOREPLIFETIME(ATopDownShooterCharacter, CurrentWeapon);
 }

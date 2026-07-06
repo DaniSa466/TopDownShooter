@@ -231,6 +231,8 @@ struct FWeaponInfo : public FTableRowBase
 	int32 MaxRound = 10;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
 	int32 NumProjectileByShoot = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	float WeaponDamage = 20.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dispersion")
 	FWeaponDispersion DispersionWeapon;
@@ -244,10 +246,11 @@ struct FWeaponInfo : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
 	FProjectileInfo ProjectileSetting;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trace")
-	float WeaponDamage = 20.f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trace")
 	float DistanceTrace = 2000.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Trace")
+	UParticleSystem* trace = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HitEffect")
 	UDecalComponent* DecalOnHit = nullptr;
