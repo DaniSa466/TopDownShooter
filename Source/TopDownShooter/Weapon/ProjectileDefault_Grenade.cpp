@@ -63,8 +63,6 @@ void AProjectileDefault_Grenade::Explose_OnServer_Implementation()
 		GetActorLocation(), ProjectileSetting.ProjectileMinRadiusDamage, 
 		ProjectileSetting.ProjectileMaxRadiusDamage, 5,
 		NULL, IgnoreActor, this, nullptr, ECC_Visibility);
-	UE_LOG(LogTemp, Warning, TEXT("AProjectileDefault_Grenade::Explose - MaxDamage = %f, MinDamage = %f"),
-		ProjectileSetting.ExplodeMaxDamage, ProjectileSetting.ExplodeMaxDamage * 0.2f);
 
 	DestroyGrenade_Multicast();
 }

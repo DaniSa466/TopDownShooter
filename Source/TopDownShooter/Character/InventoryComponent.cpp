@@ -5,6 +5,7 @@
 #include "TopDownShooterCharacter.h"
 #include "TopDownShooter/Game/TPS_GameActorsInterface.h"
 #include "TopDownShooter/Game/TopDownShooterGameInstance.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
 UInventoryComponent::UInventoryComponent()
@@ -12,7 +13,7 @@ UInventoryComponent::UInventoryComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
+	SetIsReplicatedByDefault(true);
 	// ...
 }
 
@@ -133,7 +134,8 @@ bool UInventoryComponent::SwitchWeaponToNextOrPrevious(int8 OldIndex, FAdditiona
 	if (SwitchIsSuccess)
 	{
 		SetAdditionalWeaponInfo(OldIndex, OldInfo);
-		OnSwitchWeapon.Broadcast(WeaponSlots[NewIndex].NameItem, WeaponSlots[NewIndex].AdditionalInfo, NewIndex);
+		SwitchWeaponEvent_OnServer(WeaponSlots[NewIndex].NameItem, 
+			WeaponSlots[NewIndex].AdditionalInfo, NewIndex);
 	}
 
 	return SwitchIsSuccess;
@@ -151,7 +153,7 @@ bool UInventoryComponent::SwitchWeaponToIndex(int32 indexWeaponToChange, int32 p
 	if (!weaponNameToSwitch.IsNone())
 	{
 		SetAdditionalWeaponInfo(previousIndex, previousWeaponInfo);
-		OnSwitchWeapon.Broadcast(weaponNameToSwitch, AdditionalInfoToSwitch, indexWeaponToChange);
+		SwitchWeaponEvent_OnServer(weaponNameToSwitch, AdditionalInfoToSwitch, indexWeaponToChange);
 
 		//check ammo slot for event to player
 		EWeaponType weaponTypeToSwitch;
@@ -185,9 +187,9 @@ bool UInventoryComponent::CheckAmmoForWeapon(EWeaponType WeaponType, int16 &Avia
 
 	if (ATopDownShooterCharacter* InventoryPointerToCharacter = Cast<ATopDownShooterCharacter>(GetOwner()))
 	{
-		if (InventoryPointerToCharacter->GetCurrentWeapon() && 
+		if (InventoryPointerToCharacter->GetCurrentWeapon() &&
 			InventoryPointerToCharacter->GetCurrentWeapon()->AdditionalWeaponInfo.Round == 0)
-			OnAmmoEmpty.Broadcast(WeaponType); //visual sign for empty ammo
+			AmmoEmptyEvent_Multicast(WeaponType); //visual sign for empty ammo
 
 		InventoryPointerToCharacter = nullptr;
 	}
@@ -295,7 +297,7 @@ void UInventoryComponent::SetAdditionalWeaponInfo(int8 WeaponIndex, FAdditionalW
 				WeaponSlots[i].AdditionalInfo = NewInfo;
 				bIsFound = true;
 
-				OnWeaponChangeAdditionalInfo.Broadcast(i, NewInfo);
+				WeaponChangeAdditionalInfo_Multicast(i, NewInfo);
 			}
 			i++;
 		}
@@ -322,7 +324,7 @@ void UInventoryComponent::AmmoSlotChangeValue(EWeaponType TypeWeapon, int32 Take
 			if (AmmoSlots[i].count > AmmoSlots[i].MaxCount)
 				AmmoSlots[i].count = AmmoSlots[i].MaxCount;
 
-			OnAmmoChange.Broadcast(AmmoSlots[i].WeaponType, AmmoSlots[i].count, TakenAmmo > 0);
+			AmmoChangeEvent_Multicast(AmmoSlots[i].WeaponType, AmmoSlots[i].count, TakenAmmo > 0);
 			bIsFound = true;	
 		}
 
@@ -368,17 +370,17 @@ bool UInventoryComponent::PickUpWeapon(FWeaponSlot NewWeapon, int32 WeaponIndexT
 		WeaponSlots[WeaponIndexToChange] = NewWeapon;
 
 		SwitchWeaponToNextOrPrevious(WeaponIndexToChange, NewWeapon.AdditionalInfo, false, true);
-		OnUpdateWeaponSlots.Broadcast(WeaponIndexToChange, NewWeapon);
+		UpdateWeaponSlotsEvent_Multicast(WeaponIndexToChange, NewWeapon);
 
 		result = true;
 	}
-	//UE_LOG(LogTemp, Warning, TEXT("InventoryComponent::PickUpWeapon - SlotToChange = %f. Name = %f. Round = %f."), WeaponIndexToChange, NewWeapon.NameItem, NewWeapon.AdditionalInfo.Round);
 
 	return result;
 }
 
-void UInventoryComponent::DropWeaponByIndex(int32 index, FDropItem& dropItemInfo)
+void UInventoryComponent::DropWeaponByIndex_OnServer_Implementation(int32 index)
 {
+	FDropItem dropItemInfo;
 	FWeaponSlot emptyWeaponSlot;
 
 	bool canBeDropped = false;
@@ -397,15 +399,17 @@ void UInventoryComponent::DropWeaponByIndex(int32 index, FDropItem& dropItemInfo
 
 	if (canBeDropped && WeaponSlots.IsValidIndex(index) && GetDropItemFromInventory(index, dropItemInfo))
 	{
-		GetDropItemFromInventory(index, dropItemInfo);
-
 		//switch weapon to valid slot from start weaponSlots array
 		bool bWeaponIsFound = false;
 		int8 j = 0;
 		while (j < WeaponSlots.Num() && !bWeaponIsFound)
 		{
-			if (!WeaponSlots[j].NameItem.IsNone())
-				OnSwitchWeapon.Broadcast(WeaponSlots[j].NameItem, WeaponSlots[j].AdditionalInfo, j);
+			if (!WeaponSlots[j].NameItem.IsNone() && j != index)
+			{
+				SwitchWeaponToIndex(j, index, WeaponSlots[index].AdditionalInfo);
+				SwitchWeaponEvent_OnServer(WeaponSlots[j].NameItem, WeaponSlots[j].AdditionalInfo, j);
+				bWeaponIsFound = true;
+			}
 
 			j++;
 		}
@@ -416,13 +420,14 @@ void UInventoryComponent::DropWeaponByIndex(int32 index, FDropItem& dropItemInfo
 			ITPS_GameActorsInterface::Execute_DropWeaponToWorld(GetOwner(), dropItemInfo);
 		}
 
-		OnUpdateWeaponSlots.Broadcast(index, emptyWeaponSlot);
+		UpdateWeaponSlotsEvent_Multicast(index, emptyWeaponSlot);
 	}
 }
 
-bool UInventoryComponent::TryGetWeaponToInventory(FWeaponSlot NewWeapon, bool &BPWeaponIsInInventory)
+void UInventoryComponent::TryGetWeaponToInventory_OnServer_Implementation(
+	AActor* pickUpActor, FWeaponSlot NewWeapon)
 {
-	bool CanTake = false;
+	bool bCanTake = false;
 	int32 IndexSlot = -1;
 	
 	// Check if inventory alredy has this weapon
@@ -435,15 +440,17 @@ bool UInventoryComponent::TryGetWeaponToInventory(FWeaponSlot NewWeapon, bool &B
 			WeaponIsInInventory = true;
 		i++;
 	}
-	BPWeaponIsInInventory = WeaponIsInInventory;
 
 	if (CheckCanTakeWeapon(IndexSlot) && !WeaponIsInInventory)
 	{
 		WeaponSlots[IndexSlot] = NewWeapon;
-		OnUpdateWeaponSlots.Broadcast(IndexSlot, NewWeapon); 
-		CanTake = true;
+		UpdateWeaponSlotsEvent_Multicast(IndexSlot, NewWeapon);
+
+		if (pickUpActor)
+			pickUpActor->Destroy();
+
+		bCanTake = true;
 	}
-	return CanTake;
 }
 
 bool UInventoryComponent::GetDropItemFromInventory(int32 WeaponIndexToDrop, FDropItem &DropItemInfo)
@@ -482,10 +489,59 @@ void UInventoryComponent::InitInventory_OnServer_Implementation(const TArray<FWe
 
 	//Find Init WeaponSlots and First Init Weapon
 
-
 	MaxSlotsWeapon = WeaponSlots.Num();
 
 	if (WeaponSlots.IsValidIndex(0))
 		if (!WeaponSlots[0].NameItem.IsNone())
-			OnSwitchWeapon.Broadcast(WeaponSlots[0].NameItem, WeaponSlots[0].AdditionalInfo, 0);
+			SwitchWeaponEvent_OnServer(WeaponSlots[0].NameItem, WeaponSlots[0].AdditionalInfo, 0);
+}
+
+void UInventoryComponent::SwitchWeaponEvent_OnServer_Implementation(FName idWeaponName, 
+	FAdditionalWeaponInfo additionalWeaponInfo, int32 newCurrentIndexWeapon)
+{
+	OnSwitchWeapon.Broadcast(idWeaponName, additionalWeaponInfo, newCurrentIndexWeapon);
+}
+
+void UInventoryComponent::AmmoChangeEvent_Multicast_Implementation(EWeaponType typeWeapon, int32 count, bool isIncreasing)
+{
+	OnAmmoChange.Broadcast(typeWeapon, count, isIncreasing);
+}
+
+void UInventoryComponent::WeaponChangeAdditionalInfo_Multicast_Implementation(int32 indexSlot, FAdditionalWeaponInfo additionalInfo)
+{
+	OnWeaponChangeAdditionalInfo.Broadcast(indexSlot, additionalInfo);
+}
+
+void UInventoryComponent::AmmoEmptyEvent_Multicast_Implementation(EWeaponType weaponType)
+{
+	OnAmmoEmpty.Broadcast(weaponType);
+}
+
+void UInventoryComponent::AmmoAvialableEvent_Multicast_Implementation(EWeaponType weaponType)
+{
+	OnAmmoAvialable.Broadcast(weaponType);
+}
+
+void UInventoryComponent::UpdateWeaponSlotsEvent_Multicast_Implementation(int32 indexSlot, FWeaponSlot newInfo)
+{
+	OnUpdateWeaponSlots.Broadcast(indexSlot, newInfo);
+}
+
+void UInventoryComponent::WeaponHasNoRoundEvent_Multicast_Implementation(int32 weaponIndex)
+{
+	OnWeaponHasNoRound.Broadcast(weaponIndex);
+}
+
+void UInventoryComponent::WeaponHasRoundEvent_Multicast_Implementation(int32 weaponIndex)
+{
+	OnWeaponHasRound.Broadcast(weaponIndex);
+}
+
+void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UInventoryComponent, WeaponSlots);
+	DOREPLIFETIME(UInventoryComponent, AmmoSlots);
+
 }

@@ -11,6 +11,7 @@ AProjectileDefault::AProjectileDefault()
 	PrimaryActorTick.bCanEverTick = true;
 
 	SetReplicates(true);
+	SetReplicateMovement(true);
 
 	BulletCollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Collision Sphere"));
 
@@ -49,10 +50,18 @@ AProjectileDefault::AProjectileDefault()
 void AProjectileDefault::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	if (BulletCollisionSphere)
+	{
+		AActor* ownerActor = GetOwner();
+		APawn* instigatorPawn = GetInstigator();
 
-	BulletCollisionSphere->OnComponentHit.AddDynamic(this, &AProjectileDefault::BulletCollisionSphereHit);
-	BulletCollisionSphere->OnComponentBeginOverlap.AddDynamic(this, &AProjectileDefault::BulletCollisionSphereBeginOverlap);
-	BulletCollisionSphere->OnComponentEndOverlap.AddDynamic(this, &AProjectileDefault::BulletCollisionSphereEndOverlap);
+		if (ownerActor)
+			BulletCollisionSphere->IgnoreActorWhenMoving(ownerActor, true);
+
+		if (instigatorPawn)
+			BulletCollisionSphere->IgnoreActorWhenMoving(instigatorPawn, true);
+	}
 }
 
 // Called every frame
@@ -61,13 +70,22 @@ void AProjectileDefault::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-bool AProjectileDefault::InitProjectile(FProjectileInfo InitParam)
+bool AProjectileDefault::InitProjectile(const FProjectileInfo& InitParam)
 {
 	bool shootByProjectile = true;
+	ProjectileSetting = InitParam;
+
+	SetLifeSpan(InitParam.ProjectileLifeTime);
+
+	if (!BulletProjectileMovement)
+		return false;
 
 	BulletProjectileMovement->InitialSpeed = InitParam.ProjectileInitSpeed;
 	BulletProjectileMovement->MaxSpeed = InitParam.ProjectileMaxSpeed;
-	this->SetLifeSpan(InitParam.ProjectileLifeTime);
+	BulletProjectileMovement->SetVelocityInLocalSpace(FVector::ForwardVector * InitParam.ProjectileInitSpeed);
+
+	BulletProjectileMovement->UpdateComponentVelocity();
+	BulletProjectileMovement->Activate(true);
 
 	if (InitParam.projectileStaticMesh)
 	{
@@ -97,10 +115,15 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp,
 	AActor* OtherActor, UPrimitiveComponent* OtherComp, 
 	FVector NormalImpulse, const FHitResult& Hit)
 {
+	if (!HasAuthority())
+		return;
+
+	if (!OtherActor || OtherActor == GetOwner() || OtherActor == GetInstigator())
+		return;
+
 	if (OtherActor && Hit.PhysMaterial.IsValid())
 	{
 		EPhysicalSurface MySurfaceType = UGameplayStatics::GetSurfaceType(Hit);
-		//UE_LOG(LogTemp, Warning, TEXT("AProjectileDefault::BulletCollisionSphereHit - first condition met"));
 
 		if (ProjectileSetting.HitDecals.Contains(MySurfaceType))
 		{
@@ -127,7 +150,7 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp,
 	UGameplayStatics::ApplyPointDamage(OtherActor, ProjectileSetting.ProjectileDamage, Hit.TraceStart, Hit, 
 		GetInstigatorController(), this, NULL);
 	UAISense_Damage::ReportDamageEvent(GetWorld(), Hit.GetActor(), GetInstigator(), 
-		ProjectileSetting.ProjectileDamage, Hit.Location, Hit.Location); // todo shootgun trace, grenade
+		ProjectileSetting.ProjectileDamage, Hit.Location, Hit.Location);
 
 	ImpactProjectile();
 }

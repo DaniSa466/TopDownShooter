@@ -49,14 +49,14 @@ TArray<UTPS_StatsEffects*> ATPS_EnvironmentStructure::GetCurrentEffects()
 	return Effects;
 }
 
-void ATPS_EnvironmentStructure::RemoveEffect(UTPS_StatsEffects* EffectToRemove)
+void ATPS_EnvironmentStructure::RemoveEffect(UTPS_StatsEffects* effectToRemove)
 {
-	EffectToRemove->BeginDestroy();
+	effectToRemove->BeginDestroy();
 
-	Effects.Remove(EffectToRemove);
+	Effects.Remove(effectToRemove);
 }
 
-void ATPS_EnvironmentStructure::AddEffect(UTPS_StatsEffects* EffectToAdd)
+void ATPS_EnvironmentStructure::AddEffect(UTPS_StatsEffects* effectToAdd)
 {
-	Effects.Add(EffectToAdd);
+	Effects.Add(effectToAdd);
 }

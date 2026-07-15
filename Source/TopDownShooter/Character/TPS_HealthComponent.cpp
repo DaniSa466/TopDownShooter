@@ -1,10 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "TPS_HealthComponent.h"
+#include "Net/UnrealNetwork.h"
 
 void UTPS_HealthComponent::RegenHealth()
 {
-	ChangeCurrentHealth(3.f);
+	ChangeCurrentHealth_OnServer(3.f);
 }
 
 void UTPS_HealthComponent::StartRegen()
@@ -18,6 +19,7 @@ UTPS_HealthComponent::UTPS_HealthComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
+	SetIsReplicatedByDefault(true);
 
 	// ...
 }
@@ -59,10 +61,8 @@ void UTPS_HealthComponent::SetCurrentHealth(float SetHealth)
 	HealthValue = SetHealth;
 }
 
-void UTPS_HealthComponent::ChangeCurrentHealth(float ChangeValue)
+void UTPS_HealthComponent::ChangeCurrentHealth_OnServer_Implementation(float ChangeValue)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("HealthComponent::ChangeCurrentHealth ChangeValue -%d"), ChangeValue);
-
 	if (ChangeValue < 0)
 	{
 		if (GetWorld() && bCanRegen)
@@ -80,7 +80,7 @@ void UTPS_HealthComponent::ChangeCurrentHealth(float ChangeValue)
 	}
 
 	HealthValue += ChangeValue;
-	OnHealthChange.Broadcast(HealthValue, ChangeValue);
+	HealthChangeEvent_Multicast(HealthValue, ChangeValue);
 
 	if (HealthValue >= maxHealth)
 	{
@@ -93,9 +93,24 @@ void UTPS_HealthComponent::ChangeCurrentHealth(float ChangeValue)
 	{
 		if (HealthValue <= 0.0f)
 		{
-			OnDead.Broadcast();
+			DeadEvent_Multicast();
 		}
 	}
+}
 
-	UE_LOG(LogTemp, Warning, TEXT("HealthComponent::ChangeCurrentHealth ChangeValue -%d"), HealthValue);
+void UTPS_HealthComponent::HealthChangeEvent_Multicast_Implementation(float healthVal, float changeValue)
+{
+	OnHealthChange.Broadcast(healthVal, changeValue);
+}
+
+void UTPS_HealthComponent::DeadEvent_Multicast_Implementation()
+{
+	OnDead.Broadcast();
+}
+
+void UTPS_HealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UTPS_HealthComponent, HealthValue);
 }

@@ -29,8 +29,8 @@ public:
 
 	TArray<UTPS_StatsEffects*> GetCurrentEffects() override;
 
-	void RemoveEffect(UTPS_StatsEffects* EffectToRemove) override;
-	void AddEffect(UTPS_StatsEffects* EffectToAdd) override;
+	void RemoveEffect(UTPS_StatsEffects* effectToRemove) override;
+	void AddEffect(UTPS_StatsEffects* effectToAdd) override;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 	TArray<UTPS_StatsEffects*> Effects;

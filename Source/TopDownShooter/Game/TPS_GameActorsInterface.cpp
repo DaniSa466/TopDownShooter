@@ -18,7 +18,7 @@ TArray<UTPS_StatsEffects*> ITPS_GameActorsInterface::GetCurrentEffects()
 	return effect;
 }
 
-void ITPS_GameActorsInterface::RemoveEffect(UTPS_StatsEffects* EffectToRemove) { }
+void ITPS_GameActorsInterface::RemoveEffect(UTPS_StatsEffects* effectToRemove) { }
 
-void ITPS_GameActorsInterface::AddEffect(UTPS_StatsEffects* EffectToAdd) { }
+void ITPS_GameActorsInterface::AddEffect(UTPS_StatsEffects* effectToAdd) { }
 

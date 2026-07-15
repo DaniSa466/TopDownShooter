@@ -60,7 +60,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SheildSounds")
 	USoundBase* ShieldIsRecoveredSound = nullptr;
 
-	void ChangeCurrentHealth(float ChangeValue) override;
+	void ChangeCurrentHealth_OnServer(float ChangeValue) override;
 	void ChangeShieldStrenght(float ChangeValue);
 
 	UFUNCTION(BlueprintCallable)
@@ -73,4 +73,15 @@ public:
 	float GetMaxHealth();
 	void IncreaseHealthByCoef(float coef);
 	void DecreasehealthByCoef(float coef);
+
+	// delegates
+	UFUNCTION(NetMulticast, Reliable)
+	void ShieldChangeStrenghtEvent_Multicast(float shieldStrenght, float damage);
+	UFUNCTION(NetMulticast, Reliable)
+	void HealthIncreaseEffectEvent_Multicast(float maxHealthVal, float coef);
+	UFUNCTION(NetMulticast, Reliable)
+	void ShieldBrokenEvent_Multicast();
+	UFUNCTION(NetMulticast, Reliable)
+	void ShieldRecoveredEvent_Multicast();
+	// end delegates
 };

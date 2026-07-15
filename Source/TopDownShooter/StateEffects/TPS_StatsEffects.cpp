@@ -11,6 +11,7 @@
 bool UTPS_StatsEffects::InitObject(AActor* ActorToInit, FName hitBoneName)
 {
 	newActor = ActorToInit;
+	boneName = hitBoneName;
 
 	ITPS_GameActorsInterface* myInterface = Cast<ITPS_GameActorsInterface>(newActor);
 	if (myInterface)
@@ -59,7 +60,7 @@ void UTPS_EffectExecuteOnce::ExecuteOnce()
 			(newActor->GetComponentByClass(UTPS_HealthComponent::StaticClass()));
 
 		if (EffectPointerToHealthComponent)
-			EffectPointerToHealthComponent->ChangeCurrentHealth(Power);
+			EffectPointerToHealthComponent->ChangeCurrentHealth_OnServer(Power);
 	}
 
 	DestroyObject();
@@ -69,10 +70,13 @@ bool UTPS_TemporaryEffect::InitObject(AActor* ActorToInit, FName hitBoneName)
 {
 	Super::InitObject(ActorToInit, hitBoneName);
 
-	GetWorld()->GetTimerManager().SetTimer(EffectTimer, this, 
-		&UTPS_TemporaryEffect::DestroyObject, Timer, false);
-	GetWorld()->GetTimerManager().SetTimer(ExecuteTimer, this,
-		&UTPS_TemporaryEffect::Execute, RateTime, true);
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().SetTimer(EffectTimer, this,
+			&UTPS_TemporaryEffect::DestroyObject, Timer, false);
+		GetWorld()->GetTimerManager().SetTimer(ExecuteTimer, this,
+			&UTPS_TemporaryEffect::Execute, RateTime, true);
+	}
 
 	if (ParticleEffect)
 	{
@@ -98,11 +102,14 @@ bool UTPS_TemporaryEffect::InitObject(AActor* ActorToInit, FName hitBoneName)
 
 void UTPS_TemporaryEffect::DestroyObject()
 {
+	if (GetWorld())
+		GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
+
 	if (ParticleEmitter == nullptr)
 		return Super::DestroyObject();
 
-	ParticleEmitter->DestroyComponent();
-	ParticleEmitter = nullptr;
+	//ParticleEmitter->DestroyComponent();
+	//ParticleEmitter = nullptr;
 	Super::DestroyObject();
 }
 
@@ -113,7 +120,7 @@ void UTPS_TemporaryEffect::Execute()
 		UTPS_HealthComponent* EffectPointerToHealthComponent = Cast<UTPS_HealthComponent>
 			(newActor->GetComponentByClass(UTPS_HealthComponent::StaticClass()));
 		if (EffectPointerToHealthComponent)
-			EffectPointerToHealthComponent->ChangeCurrentHealth(Power);
+			EffectPointerToHealthComponent->ChangeCurrentHealth_OnServer(Power);
 	}
 }
 
@@ -126,8 +133,10 @@ bool UTPS_SpeedUpEffect::InitObject(AActor* ActorToSpeedUp, FName hitBoneName)
 		return false;
 
 	IncreaseSpeed();
-	GetWorld()->GetTimerManager().SetTimer(decreaseTimer, this,
-		&UTPS_SpeedUpEffect::DestroyObject, speedUpTimer, false);
+
+	if (GetWorld())
+		GetWorld()->GetTimerManager().SetTimer(decreaseTimer, this,
+			&UTPS_SpeedUpEffect::DestroyObject, speedUpTimer, false);
 
 	return true;
 }
@@ -159,7 +168,10 @@ bool UTPS_EffectsToHealth::InitObject(AActor* actorToInit, FName hitBoneName)
 		return false;
 
 	ChangeHealthCoef();
-	GetWorld()->GetTimerManager().SetTimer(backTimer, this, &UTPS_EffectsToHealth::DestroyObject, timer, false);
+
+	if(GetWorld())
+		GetWorld()->GetTimerManager().SetTimer(backTimer, this, 
+			&UTPS_EffectsToHealth::DestroyObject, timer, false);
 
 	return true;
 }
@@ -227,7 +239,10 @@ bool UTPS_StunEffect::InitObject(AActor* ActorToStun, FName hitBoneName)
 		return false;
 
 	ChangeCharacterInputStatus(true);
-	GetWorld()->GetTimerManager().SetTimer(stunTimer, this, &UTPS_StunEffect::DestroyObject, timer, false);
+
+	if (GetWorld())
+		GetWorld()->GetTimerManager().SetTimer(stunTimer, this, 
+			&UTPS_StunEffect::DestroyObject, timer, false);
 
 	return true;
 }
@@ -253,7 +268,6 @@ void UTPS_StunEffect::ChangeCharacterInputStatus(bool isStun)
 			pointerToCharacter->PlayAnimMontage(loopAnimation);
 
 		pointerToCharacter->ResSpeed = 0;
-		//pointerToCharacter->GetCharacterMovement()->StopMovementImmediately();
 		pointerToCharacter->DisableInput(Cast<APlayerController>(pointerToCharacter->GetController()));
 
 		USkeletalMeshComponent* characterMesh = pointerToCharacter->GetMesh();

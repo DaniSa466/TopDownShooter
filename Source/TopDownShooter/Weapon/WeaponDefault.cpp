@@ -113,9 +113,6 @@ void AWeaponDefault::DispersionTick(float DeltaTime)
 		if (CurrentDispersion < CurrentDispersionMin)
 			CurrentDispersion = CurrentDispersionMin;
 	}
-
-	if (ShowDebug)
-		UE_LOG(LogTemp, Warning, TEXT("Dispersion: MAX = %f. MIN = %f. Current = %f."), CurrentDispersionMax, CurrentDispersionMin, CurrentDispersion);
 }
 
 void AWeaponDefault::ClipDropTick(float DeltaTime)
@@ -241,11 +238,14 @@ void AWeaponDefault::Fire()
 
 					FMatrix myMatrix(Dir, FVector(0, 0, 0), FVector(0, 0, 0), FVector::ZeroVector);
 					SpawnRotation = myMatrix.Rotator();
+					//SpawnRotation = Dir.Rotation();
+
+					APawn* ownerPawn = Cast<APawn>(GetOwner());
 
 					FActorSpawnParameters SpawnParams;
 					SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-					SpawnParams.Owner = GetOwner();
-					SpawnParams.Instigator = GetInstigator();
+					SpawnParams.Owner = ownerPawn;
+					SpawnParams.Instigator = ownerPawn;
 
 					AProjectileDefault* myProjectile = Cast<AProjectileDefault>(GetWorld()->SpawnActor(ProjectileInfo.Projectile, 
 						&SpawnLocation, &SpawnRotation, SpawnParams));
@@ -254,14 +254,18 @@ void AWeaponDefault::Fire()
 						myProjectile->InitialLifeSpan = 20.0f;
 						shotByProjectile = myProjectile->InitProjectile(WeaponSettings.ProjectileSetting);
 					}
+
+					if (!shotByProjectile)
+					{
+						myProjectile->Destroy();
+						InitTrace_OnServer(SpawnLocation, EndLocation);
+					}
 				}
 				else
 				{
 					//Shoot with trace
 					InitTrace_OnServer(SpawnLocation, EndLocation);
 				}
-				if (!shotByProjectile)
-					InitTrace_OnServer(SpawnLocation, EndLocation);
 			}
 		}
 	}
@@ -488,11 +492,11 @@ bool AWeaponDefault::CheckWeaponCanBeReloaded()
 			if (!myInventory->CheckAmmoForWeapon(WeaponSettings.WeaponType, avialableAmmoForWeapon))
 			{
 				result = false;
-				myInventory->OnWeaponHasNoRound.Broadcast(myInventory->GetWeaponIndexSlotByName(CurrentWeaponName));
+				myInventory->WeaponHasNoRoundEvent_Multicast(myInventory->GetWeaponIndexSlotByName(CurrentWeaponName));
 			}
 			else
 			{
-				myInventory->OnWeaponHasRound.Broadcast(myInventory->GetWeaponIndexSlotByName(CurrentWeaponName));
+				myInventory->WeaponHasRoundEvent_Multicast(myInventory->GetWeaponIndexSlotByName(CurrentWeaponName));
 			}
 		}
 	}

@@ -48,6 +48,7 @@ protected:
 	bool resistToDamage = false;
 
 	float maxHealth = 100.f;
+	UPROPERTY(Replicated)
 	float HealthValue = 100.f;
 
 public:	
@@ -66,6 +67,13 @@ public:
 	float GetCurrentHealth();
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	void SetCurrentHealth(float SetHealth);
-	UFUNCTION(BlueprintCallable, Category = "Health")
-	virtual void ChangeCurrentHealth(float ChangeValue);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Health")
+	virtual void ChangeCurrentHealth_OnServer(float ChangeValue);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void HealthChangeEvent_Multicast(float healthVal, float changeValue);
+	UFUNCTION(NetMulticast, Reliable)
+	void DeadEvent_Multicast();
+
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

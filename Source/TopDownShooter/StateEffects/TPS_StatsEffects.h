@@ -26,8 +26,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	bool bIsStackable = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stun Effect Setting")
+	UParticleSystem* ParticleEffect = nullptr;
+	UParticleSystemComponent* ParticleEmitter = nullptr;
+
 	AActor* newActor = nullptr;
 
+	FName boneName;
+
+	bool IsSupportedForNetworking() const override { return true; }
 	virtual bool InitObject(AActor* ActorToInit, FName hitBoneName);
 	virtual void DestroyObject();
 
@@ -65,11 +72,6 @@ protected:
 	FTimerHandle ExecuteTimer;
 	FTimerHandle EffectTimer;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect Execute Timer Setting")
-	UParticleSystem* ParticleEffect = nullptr;
-
-	UParticleSystemComponent* ParticleEmitter = nullptr;
-
 public:
 	bool InitObject(AActor* ActorToInit, FName hitBoneName) override;
 	void DestroyObject() override;
@@ -106,10 +108,6 @@ protected:
 	float healthCoef = 1.5f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect to Health Setting")
 	float timer = 5;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resist to Damage Particle Setting")
-	UParticleSystem* ParticleEffect = nullptr;
-
-	UParticleSystemComponent* ParticleEmitter = nullptr;
 
 	ATopDownShooterCharacter* pointerToCharacter = nullptr;
 	UTPS_CharHealthComponent* pointerToHealthComponent = nullptr;
@@ -131,10 +129,6 @@ protected:
 	UAnimMontage* loopAnimation = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stun Effect Setting")
 	float timer = 3.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stun Effect Setting")
-	UParticleSystem* ParticleEffect = nullptr;
-
-	UParticleSystemComponent* ParticleEmitter = nullptr;
 
 	ATopDownShooterCharacter* pointerToCharacter = nullptr;
 	FTimerHandle stunTimer;

@@ -21,7 +21,9 @@
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Engine/World.h"
 #include "TopDownShooter/TopDownShooter.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Engine/ActorChannel.h"
 
 ATopDownShooterCharacter::ATopDownShooterCharacter()
 {
@@ -73,10 +75,13 @@ void ATopDownShooterCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	ChangeMovementState();
-	StaminaSystem(MovementState);
-	SprintDirectionLimitation(MovementState);
-	MovementTick(DeltaSeconds);
+	if (IsLocallyControlled())
+	{
+		ChangeMovementState();
+		StaminaSystem(MovementState);
+		SprintDirectionLimitation(MovementState);
+		MovementTick(DeltaSeconds);
+	}
 
 	if(CurrentCursor)
 	{
@@ -97,9 +102,6 @@ void ATopDownShooterCharacter::Tick(float DeltaSeconds)
 void ATopDownShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (GetController() && GetController()->IsLocalPlayerController())
-		SetOwner(GetController());
 
 	if (GetWorld() && GetWorld()->GetNetMode() != NM_DedicatedServer)
 	{
@@ -125,9 +127,9 @@ void ATopDownShooterCharacter::SetupPlayerInputComponent(UInputComponent* NewInp
 		this, &ATopDownShooterCharacter::TryReloadWeapon);
 
 	NewInputComponent->BindAction(TEXT("SwitchNextWeapon"), EInputEvent::IE_Pressed, 
-		this, &ATopDownShooterCharacter::SwitchNextWeapon);
+		this, &ATopDownShooterCharacter::SwitchNextWeapon_OnServer);
 	NewInputComponent->BindAction(TEXT("SwitchPreviousWeapon"), EInputEvent::IE_Pressed, 
-		this, &ATopDownShooterCharacter::SwitchPreviousWeapon);
+		this, &ATopDownShooterCharacter::SwitchPreviousWeapon_OnServer);
 
 	NewInputComponent->BindAction(TEXT("AbilityAction"), EInputEvent::IE_Pressed,
 		this, &ATopDownShooterCharacter::TryAbilityEnabled);
@@ -188,7 +190,7 @@ void ATopDownShooterCharacter::InputAttackReleased()
 void ATopDownShooterCharacter::TryReloadWeapon()
 {
 	if (IsAlive && CurrentWeapon && !CurrentWeapon->WeaponReloading)
-		TryreloadWeapon_OnServer();
+		TryReloadWeapon_OnServer();
 }
 
 void ATopDownShooterCharacter::AttackCharEvent(bool bIsFiring)
@@ -210,9 +212,6 @@ void ATopDownShooterCharacter::MovementTick(float DeltaTime)
 		{
 			AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
 			AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
-
-			/*FString SEnum = UEnum::GetValueAsString(GetMovementState());
-			UE_LOG(LogTopDownShooter_Network, Warning, TEXT("Movement State - %s"), *SEnum);*/
 
 			APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
@@ -473,7 +472,7 @@ void ATopDownShooterCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponI
 						CurrentWeapon->InitReload();
 
 					if (InventoryComponent)
-						InventoryComponent->OnAmmoAvialable.Broadcast(MyWeapon->WeaponSettings.WeaponType);
+						InventoryComponent->AmmoAvialableEvent_Multicast(MyWeapon->WeaponSettings.WeaponType);
 				}
 			}
 		}
@@ -484,9 +483,8 @@ void ATopDownShooterCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponI
 	}
 }
 
-bool ATopDownShooterCharacter::TrySwitchWeaponToIndexByKeyInput(int32 index)
+void ATopDownShooterCharacter::TrySwitchWeaponToIndexByKeyInput_OnServer_Implementation(int32 index)
 {
-	bool isSuccess = false;
 	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->GetWeaponSlots().IsValidIndex(index))
 	{
 		if (CurrentIndexWeapon != index)
@@ -495,19 +493,16 @@ bool ATopDownShooterCharacter::TrySwitchWeaponToIndexByKeyInput(int32 index)
 			FAdditionalWeaponInfo oldInfo;
 
 			oldInfo = CurrentWeapon->AdditionalWeaponInfo;
-			isSuccess = InventoryComponent->SwitchWeaponToIndex(index, oldIndex, oldInfo);
+			InventoryComponent->SwitchWeaponToIndex(index, oldIndex, oldInfo);
 		}
 	}
-
-	return isSuccess;
 }
 
 void ATopDownShooterCharacter::DropCurrentWeapon()
 {
 	if (InventoryComponent)
 	{
-		FDropItem ItemInfo;
-		InventoryComponent->DropWeaponByIndex(CurrentIndexWeapon, ItemInfo);
+		InventoryComponent->DropWeaponByIndex_OnServer(CurrentIndexWeapon);
 	}
 }
 
@@ -560,29 +555,25 @@ UDecalComponent* ATopDownShooterCharacter::GetCursorToWorld()
 	return CurrentCursor;
 }
 
-void ATopDownShooterCharacter::SwitchNextWeapon()
+void ATopDownShooterCharacter::SwitchNextWeapon_OnServer_Implementation()
 {
 	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->GetWeaponSlots().Num() > 1)
 	{
 		FAdditionalWeaponInfo OldInfo;
 
-			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
-			if (CurrentWeapon->WeaponReloading)
-				CurrentWeapon->CancelReload();
+		OldInfo = CurrentWeapon->AdditionalWeaponInfo;
 
 		InventoryComponent->SwitchWeaponToNextOrPrevious(CurrentIndexWeapon, OldInfo, true);
 	}
 }
 
-void ATopDownShooterCharacter::SwitchPreviousWeapon()
+void ATopDownShooterCharacter::SwitchPreviousWeapon_OnServer_Implementation()
 {
 	if (CurrentWeapon && !CurrentWeapon->WeaponReloading &&  InventoryComponent->GetWeaponSlots().Num() > 1)
 	{
 		FAdditionalWeaponInfo OldInfo;
 
-			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
-			if (CurrentWeapon->WeaponReloading)
-				CurrentWeapon->CancelReload();
+		OldInfo = CurrentWeapon->AdditionalWeaponInfo;
 
 		InventoryComponent->SwitchWeaponToNextOrPrevious(CurrentIndexWeapon, OldInfo, false);
 	}
@@ -620,14 +611,71 @@ TArray<UTPS_StatsEffects*> ATopDownShooterCharacter::GetCurrentEffects()
 
 void ATopDownShooterCharacter::RemoveEffect(UTPS_StatsEffects* EffectToRemove)
 {
-	//EffectToRemove->BeginDestroy();
-
 	Effects.Remove(EffectToRemove);
+
+	SwitchEffect(EffectToRemove, false);
+	effectToRemove = EffectToRemove;
 }
 
 void ATopDownShooterCharacter::AddEffect(UTPS_StatsEffects* EffectToAdd)
 {
 	Effects.Add(EffectToAdd);
+
+	SwitchEffect(EffectToAdd, true);
+	effectToAdd = EffectToAdd;
+}
+
+void ATopDownShooterCharacter::OnRep_EffectToAdd()
+{
+	if (effectToAdd)
+		SwitchEffect(effectToAdd, true);
+}
+
+void ATopDownShooterCharacter::OnRep_EffectToRemove()
+{
+	if (effectToRemove)
+		SwitchEffect(effectToRemove, false);
+}
+
+void ATopDownShooterCharacter::SwitchEffect(UTPS_StatsEffects* newEffect, bool bIsAdd)
+{
+	if (bIsAdd)
+	{
+		if (newEffect && newEffect->ParticleEffect)
+		{
+			FName nameBoneToAttach = newEffect->boneName;
+			FVector location = FVector(0);
+
+			USkeletalMeshComponent* mySkelMesh = GetMesh();
+			if (mySkelMesh)
+			{
+				UParticleSystemComponent* newParticleSystem = UGameplayStatics::SpawnEmitterAttached(
+					newEffect->ParticleEffect, mySkelMesh, nameBoneToAttach, location, 
+					FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+
+				particleSystemEffects.Add(newParticleSystem);
+			}
+		}
+	}
+	else
+	{
+		int32 i = 0;
+		bool bIsFound = false;
+		
+		while (i < particleSystemEffects.Num() && !bIsFound)
+		{
+			if (particleSystemEffects[i] && newEffect->ParticleEffect && particleSystemEffects[i]->Template
+				&& newEffect->ParticleEffect == particleSystemEffects[i]->Template)
+			{
+				bIsFound = true;
+				particleSystemEffects[i]->DeactivateSystem();
+				particleSystemEffects[i]->DestroyComponent();
+				particleSystemEffects.RemoveAt(i);
+			}
+
+			i++;
+		}
+	}
 }
 
 void ATopDownShooterCharacter::CharDead()
@@ -638,7 +686,7 @@ void ATopDownShooterCharacter::CharDead()
 	if (DeadAnimations.Num() > 0 && DeadAnimations[AnimNum] && DeadAnimations.IsValidIndex(AnimNum) && GetMesh()->GetAnimInstance())
 	{
 		AnimTime = DeadAnimations[AnimNum]->GetPlayLength();
-		GetMesh()->GetAnimInstance()->Montage_Play(DeadAnimations[AnimNum]);
+		PlayAnim_Multicast(DeadAnimations[AnimNum]);
 	}
 	
 	IsAlive = false;
@@ -656,8 +704,6 @@ void ATopDownShooterCharacter::CharDead()
 
 void ATopDownShooterCharacter::EnableRagDoll()
 {
-	UE_LOG(LogTemp, Warning, TEXT("ATPS_Character::EnableRagDoll executes."));
-
 	if (GetMesh())
 	{
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
@@ -672,7 +718,7 @@ float ATopDownShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent cons
 	if (IsAlive)
 	{
 		if (!HealthComponent->GetResistToDamage())
-			HealthComponent->ChangeCurrentHealth(-DamageAmount);
+			HealthComponent->ChangeCurrentHealth_OnServer(-DamageAmount);
 	}
 
 	if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID))
@@ -680,7 +726,8 @@ float ATopDownShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent cons
 		AProjectileDefault* MyProjectile = Cast<AProjectileDefault>(DamageCauser);
 		if (MyProjectile)
 		{
-			UTypes::AddEffectBySurfaceType(this, NAME_None, MyProjectile->ProjectileSetting.Effect, GetSurfaceType()); //to do NAME_None - bone for radial damage
+			UTypes::AddEffectBySurfaceType(this, NAME_None, 
+				MyProjectile->ProjectileSetting.Effect, GetSurfaceType()); //to do NAME_None - bone for radial damage
 		}
 	}
 
@@ -703,7 +750,12 @@ void ATopDownShooterCharacter::SetMovementState_OnServer_Implementation(EMovemen
 	//del after debuging
 	UE_LOG(LogTemp, Warning, TEXT("OnServer: Role=%d, newState=%s"),
 		GetLocalRole(), *UEnum::GetValueAsString(newState));
+	AimEnabled = newState == EMovementState::AimStand_State ||
+		newState == EMovementState::AimWalk_State || newState == EMovementState::Aim_State;
+
 	SetMovementState_Multicast(newState);
+
+	ForceNetUpdate();
 }
 
 void ATopDownShooterCharacter::SetMovementState_Multicast_Implementation(EMovementState newState)
@@ -715,10 +767,28 @@ void ATopDownShooterCharacter::SetMovementState_Multicast_Implementation(EMoveme
 	CharacterUpdate();
 }
 
-void ATopDownShooterCharacter::TryreloadWeapon_OnServer_Implementation()
+void ATopDownShooterCharacter::TryReloadWeapon_OnServer_Implementation()
 {
 	if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSettings.MaxRound)
 		CurrentWeapon->InitReload();
+}
+
+void ATopDownShooterCharacter::PlayAnim_Multicast_Implementation(UAnimMontage* anim)
+{
+	if (GetMesh() && GetMesh()->GetAnimInstance())
+		GetMesh()->GetAnimInstance()->Montage_Play(anim);
+}
+
+bool ATopDownShooterCharacter::ReplicateSubobjects(UActorChannel* Channel,
+	FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	bool wrote = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	for (int32 i = 0; i < Effects.Num(); i++)
+		if (Effects[i])
+			wrote |= Channel->ReplicateSubobject(Effects[i], *Bunch, *RepFlags);
+
+	return wrote;
 }
 
 void ATopDownShooterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -726,5 +796,10 @@ void ATopDownShooterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ATopDownShooterCharacter, MovementState);
+	DOREPLIFETIME(ATopDownShooterCharacter, AimEnabled);
 	DOREPLIFETIME(ATopDownShooterCharacter, CurrentWeapon);
+	DOREPLIFETIME(ATopDownShooterCharacter, CurrentIndexWeapon);
+	DOREPLIFETIME(ATopDownShooterCharacter, Effects);
+	DOREPLIFETIME(ATopDownShooterCharacter, effectToAdd);
+	DOREPLIFETIME(ATopDownShooterCharacter, effectToRemove);
 }

@@ -33,7 +33,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	bool WalkEnabled = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	bool AimEnabled = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	bool SprintRunEnabled = false;
@@ -42,13 +42,20 @@ protected:
 	EMovementState MovementState = EMovementState::Stand_State;
 	UPROPERTY(Replicated)
 	AWeaponDefault* CurrentWeapon = nullptr;
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	UPROPERTY(Replicated, BlueprintReadOnly, EditDefaultsOnly)
 	int32 CurrentIndexWeapon = 0;
 
 	UDecalComponent* CurrentCursor = nullptr;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	UPROPERTY(Replicated, BlueprintReadOnly, EditDefaultsOnly)
 	TArray<UTPS_StatsEffects*> Effects;
+	UPROPERTY(ReplicatedUsing = OnRep_EffectToAdd)
+	UTPS_StatsEffects* effectToAdd = nullptr;
+	UPROPERTY(ReplicatedUsing = OnRep_EffectToRemove)
+	UTPS_StatsEffects* effectToRemove = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+	TArray<UParticleSystemComponent*> particleSystemEffects;
 
 	//inputs
 	void InputAxisX(float Value);
@@ -58,8 +65,10 @@ protected:
 	void InputAttackReleased();
 
 	//Inventory functions
-	void SwitchNextWeapon();
-	void SwitchPreviousWeapon();
+	UFUNCTION(Server, Reliable)
+	void SwitchNextWeapon_OnServer();
+	UFUNCTION(Server, Reliable)
+	void SwitchPreviousWeapon_OnServer();
 
 	//ability
 	void TryAbilityEnabled();
@@ -67,7 +76,7 @@ protected:
 	template <int32 id>
 	void TKeyPressed()
 	{
-		TrySwitchWeaponToIndexByKeyInput(id);
+		TrySwitchWeaponToIndexByKeyInput_OnServer(id);
 	}
 
 	//Health functions
@@ -199,7 +208,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo AdditoinalWeaponInfo, int32 NewCurrentIndexWeapon);
 
-	bool TrySwitchWeaponToIndexByKeyInput(int32 index);
+	UFUNCTION(Server, Reliable)
+	void TrySwitchWeaponToIndexByKeyInput_OnServer(int32 index);
 	void DropCurrentWeapon();
 
 	UFUNCTION()
@@ -226,10 +236,19 @@ public:
 	//Interface
 	EPhysicalSurface GetSurfaceType() override;
 	TArray<UTPS_StatsEffects*> GetCurrentEffects() override;
-	void RemoveEffect(UTPS_StatsEffects* EffectToRemove) override;
-	void AddEffect(UTPS_StatsEffects* EffectToAdd) override;
+	void RemoveEffect(UTPS_StatsEffects* effectToRemove) override;
+	void AddEffect(UTPS_StatsEffects* effectToAdd) override;
 
-	//Multyplayer
+	// multiplayer
+	// effects
+	UFUNCTION()
+	void OnRep_EffectToAdd();
+	UFUNCTION()
+	void OnRep_EffectToRemove();
+	UFUNCTION()
+	void SwitchEffect(UTPS_StatsEffects* newEffect, bool bIsAdd);
+
+	// base
 	UFUNCTION(Server, Unreliable)
 	void SetActorRotationByYaw_OnServer(float yaw);
 	UFUNCTION(NetMulticast, Unreliable)
@@ -240,7 +259,12 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void SetMovementState_Multicast(EMovementState newState);
 	UFUNCTION(Server, Reliable)
-	void TryreloadWeapon_OnServer();
+	void TryReloadWeapon_OnServer();
+	UFUNCTION(NetMulticast, Unreliable)
+	void PlayAnim_Multicast(UAnimMontage* anim);
+
+	bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, 
+		FReplicationFlags* RepFlags) override;
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

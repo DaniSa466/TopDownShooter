@@ -40,7 +40,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable)
-	bool InitProjectile(FProjectileInfo InitParam);
+	bool InitProjectile(const FProjectileInfo& InitParam);
 
 	UFUNCTION()
 	virtual void BulletCollisionSphereHit(

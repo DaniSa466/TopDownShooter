@@ -7,12 +7,16 @@
 #include "TopDownShooter/FuncLibrary/Types.h"
 #include "InventoryComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnSwitchWeapon, FName, idWeaponName, FAdditionalWeaponInfo, additionalWeaponInfo, int32, newCurrentIndexWeapon);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnAmmoChange, EWeaponType, ammoType, int32, count, bool, isIncreasing);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponChangeAdditionalInfo, int32, indexSlot, FAdditionalWeaponInfo, aditionalInfo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnSwitchWeapon, FName, idWeaponName, 
+	FAdditionalWeaponInfo, additionalWeaponInfo, int32, newCurrentIndexWeapon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnAmmoChange, EWeaponType, ammoType, 
+	int32, count, bool, isIncreasing);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponChangeAdditionalInfo, int32, indexSlot, 
+	FAdditionalWeaponInfo, aditionalInfo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAmmoEmpty, EWeaponType, weaponType);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAmmoAvialable, EWeaponType, weaponType);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUpdateWeaponSLots,int32, indexSlot , FWeaponSlot, newInfo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUpdateWeaponSLots, int32, indexSlot , 
+	FWeaponSlot, newInfo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponHasNoRound, int32, weaponIndex);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponHasRound, int32, weaponIndex);
 
@@ -53,9 +57,9 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TArray<FWeaponSlot> WeaponSlots;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TArray<FAmmoSlot> AmmoSlots;
 public:	
 	// Called every frame
@@ -89,12 +93,12 @@ public:
 	bool CheckCanTakeAmmo(EWeaponType AmmoType);
 	UFUNCTION(BlueprintCallable, Category = "PickUpItems")
 	bool CheckCanTakeWeapon(int32 &FreeSlot);
-	UFUNCTION(BlueprintCallable, Category = "PickUpItems")
-	bool TryGetWeaponToInventory(FWeaponSlot NewWeapon, bool &BPWeaponIsInInventory);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "PickUpItems")
+	void TryGetWeaponToInventory_OnServer(AActor* pickUpActor, FWeaponSlot NewWeapon);
 	UFUNCTION(BlueprintCallable, Category = "PickUpItems")
 	bool PickUpWeapon(FWeaponSlot NewWeapon, int32 WeaponIndexToChange, int32 CurrentWeaponIndex, FDropItem &DropItemInfo);
-	UFUNCTION(BlueprintCallable, Category = "PickUpItems")
-	void DropWeaponByIndex(int32 index, FDropItem& dropItemInfo);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "PickUpItems")
+	void DropWeaponByIndex_OnServer(int32 index);
 	UFUNCTION(BlueprintCallable, Category = "PickUpItems")
 	bool GetDropItemFromInventory(int32 WeaponIndexToDrop, FDropItem &DropItemInfo);
 
@@ -104,5 +108,28 @@ public:
 	TArray<FAmmoSlot> GetAmmoSlots();
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Inventory")
-	void InitInventory_OnServer(const TArray<FWeaponSlot>& newWeaponSlotsInfo, const TArray<FAmmoSlot>& newAmmoSlotsInfo);
+	void InitInventory_OnServer(const TArray<FWeaponSlot>& newWeaponSlotsInfo, 
+		const TArray<FAmmoSlot>& newAmmoSlotsInfo);
+
+	// multicast functions for delegates
+	UFUNCTION(Server, Reliable)
+	void SwitchWeaponEvent_OnServer(FName idWeaponName,
+		FAdditionalWeaponInfo additionalWeaponInfo, int32 newCurrentIndexWeapon);
+	UFUNCTION(NetMulticast, Reliable)
+	void AmmoChangeEvent_Multicast(EWeaponType typeWeapon, int32 count, bool isIncreasing);
+	UFUNCTION(NetMulticast, Reliable)
+	void WeaponChangeAdditionalInfo_Multicast(int32 indexSlot, FAdditionalWeaponInfo aditionalInfo);
+	UFUNCTION(NetMulticast, Reliable)
+	void AmmoEmptyEvent_Multicast(EWeaponType weaponType);
+	UFUNCTION(NetMulticast, Reliable)
+	void AmmoAvialableEvent_Multicast(EWeaponType weaponType);
+	UFUNCTION(NetMulticast, Reliable)
+	void UpdateWeaponSlotsEvent_Multicast(int32 indexSlot, FWeaponSlot newInfo);
+	UFUNCTION(NetMulticast, Reliable)
+	void WeaponHasNoRoundEvent_Multicast(int32 weaponIndex);
+	UFUNCTION(NetMulticast, Reliable)
+	void WeaponHasRoundEvent_Multicast(int32 weaponIndex);
+	// end delegates
+
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
