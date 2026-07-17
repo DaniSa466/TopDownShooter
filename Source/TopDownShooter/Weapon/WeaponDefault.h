@@ -120,6 +120,15 @@ public:
 	float CurrentDispersionRecoil = 0.1f;
 	float CurrentDispersionReduction = 0.1f;
 
+	TArray<FVector> tracesEndLoc;
+	
+	//may be should change logic and don't use so many arrays
+	TArray<FVector> hitImpactPoints;
+	TArray<FVector> hitImpactNormals;
+	TArray<UPrimitiveComponent*> hitComponents;
+	TArray<UMaterialInterface*> hitDecals;
+	TArray<UParticleSystem*> hitParticles;
+
 	UPROPERTY(Replicated)
 	FVector ShootEndLocation = FVector(0);
 
@@ -155,11 +164,11 @@ public:
 	void SoundAndFXWeaponFire_Multicast(UParticleSystem* fireFX, USoundBase* fireSound);
 
 	UFUNCTION(Server, Reliable)
-	void InitTrace_OnServer(FVector spawnLocation, FVector endLocation);
+	void InitTrace_OnServer(FVector spawnLocation, FVector endLocation, bool callMulticastFunc);
 	UFUNCTION(NetMulticast, Unreliable)
-	void InitTrace_Multicast(FVector_NetQuantize spawnLocation, FVector endLocation);
+	void InitTrace_Multicast(FVector_NetQuantize spawnLocation, const TArray<FVector>& endLocations);
 	UFUNCTION(NetMulticast, Unreliable)
-	void InitEffectsByTraceHit_Multicast(FVector_NetQuantize impactPoint,
-		FVector_NetQuantizeNormal impactNormal, EPhysicalSurface surfaceType, UPrimitiveComponent* component,
-		UMaterialInterface* myMaterial, UParticleSystem* myParticle, USoundBase* hitSound);
+	void InitEffectsByTraceHit_Multicast(const TArray<FVector>& impactPoints,
+		const TArray<FVector>& impactNormals, const TArray<UPrimitiveComponent*>& components, 
+		const TArray<UMaterialInterface*>& decals, const TArray<UParticleSystem*>& particles, USoundBase* sound);
 };

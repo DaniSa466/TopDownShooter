@@ -185,8 +185,8 @@ void UTPS_EffectsToHealth::DestroyObject()
 
 		if (ParticleEmitter)
 		{
-			ParticleEmitter->DestroyComponent();
-			ParticleEmitter = nullptr;
+			//ParticleEmitter->DestroyComponent();
+			//ParticleEmitter = nullptr;
 		}
 	}
 	//increasing health effect
@@ -253,8 +253,8 @@ void UTPS_StunEffect::DestroyObject()
 	
 	if (ParticleEmitter)
 	{
-		ParticleEmitter->DestroyComponent();
-		ParticleEmitter = nullptr;
+		//ParticleEmitter->DestroyComponent();
+		//ParticleEmitter = nullptr;
 	}
 
 	Super::DestroyObject();

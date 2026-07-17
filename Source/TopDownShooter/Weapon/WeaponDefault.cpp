@@ -229,6 +229,7 @@ void AWeaponDefault::Fire()
 			{
 				EndLocation = GetFireEndLocation();
 				bool shotByProjectile = false;
+				bool callInitTraceMulticast = false;
 
 				if (ProjectileInfo.Projectile)
 				{
@@ -258,13 +259,19 @@ void AWeaponDefault::Fire()
 					if (!shotByProjectile)
 					{
 						myProjectile->Destroy();
-						InitTrace_OnServer(SpawnLocation, EndLocation);
+						if (tracesEndLoc.Num() == NumberProjectile - 1)
+							callInitTraceMulticast = true;
+
+						InitTrace_OnServer(SpawnLocation, EndLocation, callInitTraceMulticast);
 					}
 				}
 				else
 				{
 					//Shoot with trace
-					InitTrace_OnServer(SpawnLocation, EndLocation);
+					if (tracesEndLoc.Num() == NumberProjectile - 1)
+						callInitTraceMulticast = true;
+
+					InitTrace_OnServer(SpawnLocation, EndLocation, callInitTraceMulticast);
 				}
 			}
 		}
@@ -627,7 +634,8 @@ void AWeaponDefault::SoundAndFXWeaponFire_Multicast_Implementation(UParticleSyst
 		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), fireSound, ShootLocation->GetComponentLocation());
 }
 
-void AWeaponDefault::InitTrace_OnServer_Implementation(FVector spawnLocation, FVector endLocation)
+void AWeaponDefault::InitTrace_OnServer_Implementation(FVector spawnLocation, FVector endLocation, 
+	bool callMulticastFunc)
 {
 	FHitResult hit;
 	TArray<AActor*> actors;
@@ -637,14 +645,20 @@ void AWeaponDefault::InitTrace_OnServer_Implementation(FVector spawnLocation, FV
 	UKismetSystemLibrary::LineTraceSingle(GetWorld(), spawnLocation,
 		endLocation, ETraceTypeQuery::TraceTypeQuery4,
 		false, actors, EDrawDebugTrace::ForDuration, hit, true, FLinearColor::Red,
-		FLinearColor::Green, 5.f);
+		FLinearColor::Green, 0.f);
+
+	tracesEndLoc.Add(hit.Location);
 
 	if (ShowDebug)
 		DrawDebugLine(GetWorld(), spawnLocation, spawnLocation +
 			ShootLocation->GetForwardVector() * WeaponSettings.DistanceTrace, FColor::Black, false,
 			5.f, (uint8)'\000', 0.5f);
 
-	InitTrace_Multicast(spawnLocation, endLocation);
+	if (callMulticastFunc)
+	{
+		InitTrace_Multicast(spawnLocation, tracesEndLoc);
+		tracesEndLoc.Empty();
+	}
 
 	if (hit.GetActor() && hit.PhysMaterial.IsValid())
 	{
@@ -668,23 +682,35 @@ void AWeaponDefault::InitTrace_OnServer_Implementation(FVector spawnLocation, FV
 		if (WeaponSettings.ProjectileSetting.HitSound)
 			hitSound = WeaponSettings.ProjectileSetting.HitSound;
 
+		hitImpactPoints.Add(hit.ImpactPoint);
+		hitImpactNormals.Add(hit.ImpactNormal);
+		hitComponents.Add(hit.GetComponent());
+		hitDecals.Add(myMaterial);
+		hitParticles.Add(myParticle);
 
-		InitEffectsByTraceHit_Multicast(hit.ImpactPoint, hit.ImpactNormal,
-			UGameplayStatics::GetSurfaceType(hit), hit.GetComponent(), myMaterial, myParticle, hitSound);
+		if (callMulticastFunc)
+		{
+			InitEffectsByTraceHit_Multicast(hitImpactPoints, hitImpactNormals, hitComponents, hitDecals, hitParticles, hitSound);
+
+			hitImpactPoints.Empty();
+			hitImpactNormals.Empty();
+			hitComponents.Empty();
+			hitDecals.Empty();
+			hitParticles.Empty();
+		}
 
 		UTypes::AddEffectBySurfaceType(hit.GetActor(), hit.BoneName, projectileInfo.Effect, UGameplayStatics::GetSurfaceType(hit));
 
 		UGameplayStatics::ApplyPointDamage(hit.GetActor(),
 			WeaponSettings.ProjectileSetting.ProjectileDamage,
 			hit.TraceStart, hit, GetInstigatorController(), this, NULL);
-
 	}
 }
 
 void AWeaponDefault::InitTrace_Multicast_Implementation(FVector_NetQuantize spawnLocation, 
-	FVector endLocation)
+	const TArray<FVector>& endLocations)
 {
-	if (!HasAuthority())
+	/*if (!HasAuthority())*/
 	{
 		//UParticleSystemComponent* particle = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),
 		//		trace, spawnLocation, (spawnLocation - endLocation).Rotation(), true);
@@ -695,27 +721,37 @@ void AWeaponDefault::InitTrace_Multicast_Implementation(FVector_NetQuantize spaw
 		FHitResult hit;
 		TArray<AActor*> actors;
 
-		UKismetSystemLibrary::LineTraceSingle(GetWorld(), spawnLocation,
-			endLocation, ETraceTypeQuery::TraceTypeQuery4,
-			false, actors, EDrawDebugTrace::ForDuration, hit, true, FLinearColor::Red,
-			FLinearColor::Green, 5.f);
+		for (int8 i = 0; i < endLocations.Num(); i++)
+		{
+			UKismetSystemLibrary::LineTraceSingle(GetWorld(), spawnLocation,
+				endLocations[i], ETraceTypeQuery::TraceTypeQuery4,
+				false, actors, EDrawDebugTrace::ForDuration, hit, true, FLinearColor::Red,
+				FLinearColor::Green, 5.f);
+		}
 	}
 }
 
-void AWeaponDefault::InitEffectsByTraceHit_Multicast_Implementation(FVector_NetQuantize impactPoint, 
-	FVector_NetQuantizeNormal impactNormal, EPhysicalSurface surfaceType, UPrimitiveComponent* component,
-	UMaterialInterface* myMaterial, UParticleSystem* myParticle, USoundBase* hitSound)
+void AWeaponDefault::InitEffectsByTraceHit_Multicast_Implementation(const TArray<FVector>& impactPoints,
+	const TArray<FVector>& impactNormals, const TArray<UPrimitiveComponent*>& components,
+	const TArray<UMaterialInterface*>& decals, const TArray<UParticleSystem*>& particles, USoundBase* sound)
 {
-	if (myMaterial && component)
-		UGameplayStatics::SpawnDecalAttached(myMaterial, FVector(20.f),
-			component, NAME_None, impactPoint, impactNormal.Rotation(),
-			EAttachLocation::KeepWorldPosition, 10.f);
+	bool server = HasAuthority();
+	UE_LOG(LogTemp, Warning, TEXT("InitEffectByTrace -- server = %s"), server ? TEXT("TRUE") : TEXT("false"));
 
-	if (myParticle)
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),
-			myParticle, FTransform(impactNormal.Rotation(),
-				impactPoint, FVector(1.f)));
+	for (int32 i = 0; i < impactPoints.Num(); i++)
+	{
+		if (decals.IsValidIndex(i) && decals[i] && components.IsValidIndex(i) && components[i])
+			UGameplayStatics::SpawnDecalAttached(decals[i], FVector(20.f),
+				components[i], NAME_None, impactPoints[i], impactNormals[i].Rotation(),
+				EAttachLocation::KeepWorldPosition, 10.f);
 
-	UGameplayStatics::PlaySoundAtLocation(GetWorld(),
-		WeaponSettings.ProjectileSetting.HitSound, impactPoint);
+		if (particles.IsValidIndex(i) && particles[i])
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),
+				particles[i], FTransform(impactNormals[i].Rotation(),
+					impactPoints[i], FVector(1.f)));
+
+		if (sound)
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(),
+				sound, impactPoints[i]);
+	}
 }

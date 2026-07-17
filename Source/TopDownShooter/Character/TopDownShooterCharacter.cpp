@@ -342,11 +342,6 @@ void ATopDownShooterCharacter::ChangeMovementState()
 			newState = EMovementState::Stand_State;
 	}
 
-	//del log after debuging
-	UE_LOG(LogTemp, Warning, TEXT("ChangeMovementState: Client=%d, Role=%d, newState=%s"),
-		GetNetMode() != NM_DedicatedServer, GetLocalRole(), *UEnum::GetValueAsString(newState));
-	SetMovementState_OnServer(newState);
-
 	//Weapon state update
 	AWeaponDefault* myWeapon = GetCurrentWeapon();
 	if (myWeapon)
@@ -669,6 +664,7 @@ void ATopDownShooterCharacter::SwitchEffect(UTPS_StatsEffects* newEffect, bool b
 			{
 				bIsFound = true;
 				particleSystemEffects[i]->DeactivateSystem();
+				//newEffect->DestroyObject();
 				particleSystemEffects[i]->DestroyComponent();
 				particleSystemEffects.RemoveAt(i);
 			}
@@ -747,9 +743,6 @@ void ATopDownShooterCharacter::SetActorRotationByYaw_Multicast_Implementation(fl
 
 void ATopDownShooterCharacter::SetMovementState_OnServer_Implementation(EMovementState newState)
 {
-	//del after debuging
-	UE_LOG(LogTemp, Warning, TEXT("OnServer: Role=%d, newState=%s"),
-		GetLocalRole(), *UEnum::GetValueAsString(newState));
 	AimEnabled = newState == EMovementState::AimStand_State ||
 		newState == EMovementState::AimWalk_State || newState == EMovementState::Aim_State;
 
@@ -760,9 +753,6 @@ void ATopDownShooterCharacter::SetMovementState_OnServer_Implementation(EMovemen
 
 void ATopDownShooterCharacter::SetMovementState_Multicast_Implementation(EMovementState newState)
 {
-	//del after debuging
-	UE_LOG(LogTemp, Warning, TEXT("Multicast: Role=%d, newState=%s"),
-		GetLocalRole(), *UEnum::GetValueAsString(newState));
 	MovementState = newState;
 	CharacterUpdate();
 }
