@@ -130,7 +130,6 @@ void ATopDownShooterCharacter::SetupPlayerInputComponent(UInputComponent* NewInp
 		this, &ATopDownShooterCharacter::SwitchNextWeapon_OnServer);
 	NewInputComponent->BindAction(TEXT("SwitchPreviousWeapon"), EInputEvent::IE_Pressed, 
 		this, &ATopDownShooterCharacter::SwitchPreviousWeapon_OnServer);
-
 	NewInputComponent->BindAction(TEXT("AbilityAction"), EInputEvent::IE_Pressed,
 		this, &ATopDownShooterCharacter::TryAbilityEnabled);
 
@@ -178,7 +177,7 @@ void ATopDownShooterCharacter::InputAxisY(float Value)
 
 void ATopDownShooterCharacter::InputAttackPressed()
 {
-	if (IsAlive)
+	if (HealthComponent && HealthComponent->GetIsAlive())
 		AttackCharEvent(true);
 }
 
@@ -189,7 +188,7 @@ void ATopDownShooterCharacter::InputAttackReleased()
 
 void ATopDownShooterCharacter::TryReloadWeapon()
 {
-	if (IsAlive && CurrentWeapon && !CurrentWeapon->WeaponReloading)
+	if (HealthComponent && HealthComponent->GetIsAlive() && CurrentWeapon && !CurrentWeapon->WeaponReloading)
 		TryReloadWeapon_OnServer();
 }
 
@@ -206,7 +205,7 @@ void ATopDownShooterCharacter::AttackCharEvent(bool bIsFiring)
 
 void ATopDownShooterCharacter::MovementTick(float DeltaTime)
 {
-	if (IsAlive)
+	if (HealthComponent && HealthComponent->GetIsAlive())
 	{
 		if (GetController() && GetController()->IsLocalController())
 		{
@@ -342,6 +341,8 @@ void ATopDownShooterCharacter::ChangeMovementState()
 			newState = EMovementState::Stand_State;
 	}
 
+	SetMovementState_OnServer(newState);
+
 	//Weapon state update
 	AWeaponDefault* myWeapon = GetCurrentWeapon();
 	if (myWeapon)
@@ -413,7 +414,10 @@ int32 ATopDownShooterCharacter::GetCurrentWeaponIndex()
 
 bool ATopDownShooterCharacter::GetIsAlive()
 {
-	return IsAlive;
+	if (HealthComponent && HealthComponent->GetIsAlive())
+		return HealthComponent->GetIsAlive();
+
+	return false;
 }
 
 void ATopDownShooterCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo AdditionalWeaponInfo, int32 NewCurrentIndexWeapon)
@@ -616,8 +620,16 @@ void ATopDownShooterCharacter::AddEffect(UTPS_StatsEffects* EffectToAdd)
 {
 	Effects.Add(EffectToAdd);
 
-	SwitchEffect(EffectToAdd, true);
-	effectToAdd = EffectToAdd;
+	if (!EffectToAdd->isAutoDestroy)
+	{
+		SwitchEffect(EffectToAdd, true);
+		effectToAdd = EffectToAdd;
+	}
+	else
+	{
+		if (EffectToAdd->ParticleEffect)
+			ExecuteEffectAdd_OnServer(EffectToAdd->ParticleEffect);
+	}
 }
 
 void ATopDownShooterCharacter::OnRep_EffectToAdd()
@@ -630,6 +642,16 @@ void ATopDownShooterCharacter::OnRep_EffectToRemove()
 {
 	if (effectToRemove)
 		SwitchEffect(effectToRemove, false);
+}
+
+void ATopDownShooterCharacter::ExecuteEffectAdd_OnServer_Implementation(UParticleSystem* effectFX)
+{
+	ExecuteEffectAdd_Multicast(effectFX);
+}
+
+void ATopDownShooterCharacter::ExecuteEffectAdd_Multicast_Implementation(UParticleSystem* effectFX)
+{
+	UTypes::ExecuteEffectAdded(effectFX, this, FVector(0), FName("Spine_01"));
 }
 
 void ATopDownShooterCharacter::SwitchEffect(UTPS_StatsEffects* newEffect, bool bIsAdd)
@@ -665,7 +687,7 @@ void ATopDownShooterCharacter::SwitchEffect(UTPS_StatsEffects* newEffect, bool b
 				bIsFound = true;
 				particleSystemEffects[i]->DeactivateSystem();
 				//newEffect->DestroyObject();
-				particleSystemEffects[i]->DestroyComponent();
+				//particleSystemEffects[i]->DestroyComponent();
 				particleSystemEffects.RemoveAt(i);
 			}
 
@@ -676,32 +698,47 @@ void ATopDownShooterCharacter::SwitchEffect(UTPS_StatsEffects* newEffect, bool b
 
 void ATopDownShooterCharacter::CharDead()
 {
-	float AnimTime = 0.0f;
-	int8 AnimNum = FMath::RandHelper(DeadAnimations.Num());
-	
-	if (DeadAnimations.Num() > 0 && DeadAnimations[AnimNum] && DeadAnimations.IsValidIndex(AnimNum) && GetMesh()->GetAnimInstance())
-	{
-		AnimTime = DeadAnimations[AnimNum]->GetPlayLength();
-		PlayAnim_Multicast(DeadAnimations[AnimNum]);
-	}
-	
-	IsAlive = false;
-	
-	if (GetController())
-		GetController()->UnPossess();
-
-	GetWorldTimerManager().SetTimer(RagDollTimer, this, &ATopDownShooterCharacter::EnableRagDoll, AnimTime, false);
-	GetCursorToWorld()->SetVisibility(false);
-
-	AttackCharEvent(false);
-
 	CharDead_BP();
+
+	if (HasAuthority())
+	{
+		float AnimTime = 0.0f;
+		int8 AnimNum = FMath::RandHelper(DeadAnimations.Num());
+
+		if (DeadAnimations.Num() > 0 && DeadAnimations[AnimNum] && DeadAnimations.IsValidIndex(AnimNum) && GetMesh()->GetAnimInstance())
+		{
+			AnimTime = DeadAnimations[AnimNum]->GetPlayLength();
+			PlayAnim_Multicast(DeadAnimations[AnimNum]);
+		}
+
+		if (GetController())
+			GetController()->UnPossess();
+
+		GetWorldTimerManager().SetTimer(RagDollTimer, this, &ATopDownShooterCharacter::EnableRagDoll_Multicast, AnimTime, false);
+
+		SetLifeSpan(20.f);
+		if (CurrentWeapon)
+			CurrentWeapon->SetLifeSpan(10.f);
+	}
+
+	else
+	{
+		if (GetCursorToWorld())
+			GetCursorToWorld()->SetVisibility(false);
+
+		AttackCharEvent(false);
+	}
+
+	if (GetCapsuleComponent())
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Ignore);
 }
 
-void ATopDownShooterCharacter::EnableRagDoll()
+void ATopDownShooterCharacter::EnableRagDoll_Multicast_Implementation()
 {
 	if (GetMesh())
 	{
+		GetMesh()->SetCollisionObjectType(ECC_PhysicsBody);
+		GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Block);
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 		GetMesh()->SetSimulatePhysics(true);
 	}
@@ -711,7 +748,7 @@ float ATopDownShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent cons
 {
 	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	if (IsAlive)
+	if (HealthComponent && HealthComponent->GetIsAlive())
 	{
 		if (!HealthComponent->GetResistToDamage())
 			HealthComponent->ChangeCurrentHealth_OnServer(-DamageAmount);
@@ -775,8 +812,10 @@ bool ATopDownShooterCharacter::ReplicateSubobjects(UActorChannel* Channel,
 	bool wrote = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
 
 	for (int32 i = 0; i < Effects.Num(); i++)
+	{
 		if (Effects[i])
 			wrote |= Channel->ReplicateSubobject(Effects[i], *Bunch, *RepFlags);
+	}
 
 	return wrote;
 }

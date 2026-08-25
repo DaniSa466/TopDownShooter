@@ -39,8 +39,8 @@ AProjectileDefault::AProjectileDefault()
 
 	BulletProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Bullet ProjectileMovement"));
 	BulletProjectileMovement->UpdatedComponent = RootComponent;
-	BulletProjectileMovement->InitialSpeed = 1.f;
-	BulletProjectileMovement->MaxSpeed = 0.f;
+	//BulletProjectileMovement->InitialSpeed = 1.f;
+	//BulletProjectileMovement->MaxSpeed = 0.f;
 
 	BulletProjectileMovement->bRotationFollowsVelocity = true;
 	BulletProjectileMovement->bShouldBounce = true;
@@ -80,8 +80,6 @@ bool AProjectileDefault::InitProjectile(const FProjectileInfo& InitParam)
 	if (!BulletProjectileMovement)
 		return false;
 
-	BulletProjectileMovement->InitialSpeed = InitParam.ProjectileInitSpeed;
-	BulletProjectileMovement->MaxSpeed = InitParam.ProjectileMaxSpeed;
 	BulletProjectileMovement->SetVelocityInLocalSpace(FVector::ForwardVector * InitParam.ProjectileInitSpeed);
 
 	BulletProjectileMovement->UpdateComponentVelocity();
@@ -106,6 +104,7 @@ bool AProjectileDefault::InitProjectile(const FProjectileInfo& InitParam)
 		BulletFX->DestroyComponent();
 
 
+	InitVelocity_Multicast(InitParam.ProjectileInitSpeed, InitParam.ProjectileMaxSpeed);
 	ProjectileSetting = InitParam;
 
 	return shootByProjectile;
@@ -170,6 +169,22 @@ void AProjectileDefault::BulletCollisionSphereEndOverlap(UPrimitiveComponent* Ov
 void AProjectileDefault::ImpactProjectile()
 {
 	this->Destroy();
+}
+
+void AProjectileDefault::PostNetReceiveVelocity(const FVector& NewVelocity)
+{
+	if (BulletProjectileMovement)
+		BulletProjectileMovement->Velocity = NewVelocity;
+}
+
+void AProjectileDefault::InitVelocity_Multicast_Implementation(float initSpeed, float maxSpeed)
+{
+	if (BulletProjectileMovement)
+	{
+		BulletProjectileMovement->Velocity = GetActorForwardVector() * initSpeed;
+		BulletProjectileMovement->InitialSpeed = initSpeed;
+		BulletProjectileMovement->MaxSpeed = maxSpeed;
+	}
 }
 
 void AProjectileDefault::InitVisualMeshProjectile_Multicast_Implementation(UStaticMesh* newMesh, FTransform meshRelative)

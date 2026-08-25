@@ -333,5 +333,10 @@ class TOPDOWNSHOOTER_API UTypes : public UBlueprintFunctionLibrary
 
 public:
 	UFUNCTION(BlueprintCallable)
-	static void AddEffectBySurfaceType(AActor* TakeEffectActor, FName hitBoneName, TSubclassOf<UTPS_StatsEffects> AddEffectClass, EPhysicalSurface PhysSurface);
+	static void AddEffectBySurfaceType(AActor* TakeEffectActor, FName hitBoneName, 
+		TSubclassOf<UTPS_StatsEffects> AddEffectClass, EPhysicalSurface PhysSurface);
+
+	UFUNCTION(BlueprintCallable)
+	static void ExecuteEffectAdded(UParticleSystem* executeFX, AActor* target, 
+		FVector offset, FName socket);
 };

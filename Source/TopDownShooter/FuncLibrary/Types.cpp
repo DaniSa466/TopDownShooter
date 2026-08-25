@@ -3,6 +3,8 @@
 
 #include "Types.h"
 #include "TopDownShooter/TopDownShooter.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/Character.h"
 #include "TopDownShooter/Game/TPS_GameActorsInterface.h"
 
 void UTypes::AddEffectBySurfaceType(AActor* TakeEffectActor, FName hitBoneName, TSubclassOf<UTPS_StatsEffects> AddEffectClass, EPhysicalSurface PhysSurface)
@@ -57,5 +59,25 @@ void UTypes::AddEffectBySurfaceType(AActor* TakeEffectActor, FName hitBoneName, 
 				i++;
 			}
 		}
+	}
+}
+
+void UTypes::ExecuteEffectAdded(UParticleSystem* executeFX, AActor* target, 
+	FVector offset, FName socket)
+{
+	if (target)
+	{
+		FName socketToAttach = socket;
+		FVector location = offset;
+		ACharacter* myChar = Cast<ACharacter>(target);
+		if (myChar && myChar->GetMesh())
+			UGameplayStatics::SpawnEmitterAttached(executeFX, myChar->GetMesh(),
+				socketToAttach, location, FRotator::ZeroRotator,
+				EAttachLocation::SnapToTarget, false);
+		else
+			if (target->GetRootComponent())
+				UGameplayStatics::SpawnEmitterAttached(executeFX, target->GetRootComponent(),
+					socketToAttach, location, FRotator::ZeroRotator,
+					EAttachLocation::SnapToTarget, false);
 	}
 }

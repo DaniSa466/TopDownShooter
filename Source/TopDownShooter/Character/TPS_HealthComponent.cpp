@@ -61,39 +61,48 @@ void UTPS_HealthComponent::SetCurrentHealth(float SetHealth)
 	HealthValue = SetHealth;
 }
 
+bool UTPS_HealthComponent::GetIsAlive()
+{
+	return isAlive;
+}
+
 void UTPS_HealthComponent::ChangeCurrentHealth_OnServer_Implementation(float ChangeValue)
 {
-	if (ChangeValue < 0)
+	if (isAlive)
 	{
-		if (GetWorld() && bCanRegen)
+		if (ChangeValue < 0)
 		{
-			GetWorld()->GetTimerManager().ClearTimer(regen_TimerHandle);
+			if (GetWorld() && bCanRegen)
+			{
+				GetWorld()->GetTimerManager().ClearTimer(regen_TimerHandle);
 
-			GetWorld()->GetTimerManager().SetTimer(startRegen_TimerHandle, this, 
-				&UTPS_HealthComponent::StartRegen, timeToStartRegen, false);
+				GetWorld()->GetTimerManager().SetTimer(startRegen_TimerHandle, this,
+					&UTPS_HealthComponent::StartRegen, timeToStartRegen, false);
+			}
+
+			if (resistToDamage)
+				return;
+
+			ChangeValue *= DamageCoef;
 		}
 
-		if (resistToDamage)
-			return;
+		HealthValue += ChangeValue;
+		HealthChangeEvent_Multicast(HealthValue, ChangeValue);
 
-		ChangeValue *= DamageCoef;
-	}
-
-	HealthValue += ChangeValue;
-	HealthChangeEvent_Multicast(HealthValue, ChangeValue);
-
-	if (HealthValue >= maxHealth)
-	{
-		HealthValue = maxHealth;
-
-		if (GetWorld() && bCanRegen)
-			GetWorld()->GetTimerManager().ClearTimer(regen_TimerHandle);
-	}
-	else
-	{
-		if (HealthValue <= 0.0f)
+		if (HealthValue >= maxHealth)
 		{
-			DeadEvent_Multicast();
+			HealthValue = maxHealth;
+
+			if (GetWorld() && bCanRegen)
+				GetWorld()->GetTimerManager().ClearTimer(regen_TimerHandle);
+		}
+		else
+		{
+			if (HealthValue <= 0.0f)
+			{
+				isAlive = false;
+				DeadEvent_Multicast();
+			}
 		}
 	}
 }
@@ -113,4 +122,5 @@ void UTPS_HealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UTPS_HealthComponent, HealthValue);
+	DOREPLIFETIME(UTPS_HealthComponent, isAlive);
 }

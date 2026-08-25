@@ -3,24 +3,24 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "GameFramework/Character.h"
 #include "TopDownShooter/Game/TPS_GameActorsInterface.h"
-#include "TopDownShooter/StateEffects/TPS_StatsEffects.h"
-#include "TPS_EnvironmentStructure.generated.h"
+#include "TPS_EnemyCharacter.generated.h"
+
+class UTPS_StatsEffects;
 
 UCLASS()
-class TOPDOWNSHOOTER_API ATPS_EnvironmentStructure : public AActor, public ITPS_GameActorsInterface
+class TOPDOWNSHOOTER_API ATPS_EnemyCharacter : public ACharacter, public ITPS_GameActorsInterface
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	ATPS_EnvironmentStructure();
+
+public:
+	// Sets default values for this character's properties
+	ATPS_EnemyCharacter();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
 	bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch,
 		FReplicationFlags* RepFlags) override;
 
@@ -28,9 +28,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	EPhysicalSurface GetSurfaceType() override;
-
-	TArray<UTPS_StatsEffects*> GetCurrentEffects() override;
+	// Called to bind functionality to input
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void RemoveEffect(UTPS_StatsEffects* effectToRemove) override;
 	void AddEffect(UTPS_StatsEffects* effectToAdd) override;
@@ -44,8 +43,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 	TArray<UParticleSystemComponent*> particleSystemEffects;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	FVector effectOffset = FVector(0);
 
 	UFUNCTION()
 	void OnRep_EffectAdd();
@@ -61,4 +58,5 @@ public:
 	void SwitchEffect(UTPS_StatsEffects* effect, bool bIsAdd);
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 };

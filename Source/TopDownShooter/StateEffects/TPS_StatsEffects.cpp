@@ -6,6 +6,7 @@
 #include "TopDownShooter/Character/TopDownShooterCharacter.h"
 #include "TopDownShooter/Game/TopDownShooterPlayerController.h"
 #include "TopDownShooter/Character/TPS_CharHealthComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 
 bool UTPS_StatsEffects::InitObject(AActor* ActorToInit, FName hitBoneName)
@@ -37,6 +38,13 @@ void UTPS_StatsEffects::DestroyObject()
 bool UTPS_StatsEffects::ChackStackableEffect()
 {
 	return false;
+}
+
+void UTPS_StatsEffects::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UTPS_StatsEffects, boneName);
 }
 
 bool UTPS_EffectExecuteOnce::InitObject(AActor* ActorToInit, FName hitBoneName)
@@ -108,8 +116,8 @@ void UTPS_TemporaryEffect::DestroyObject()
 	if (ParticleEmitter == nullptr)
 		return Super::DestroyObject();
 
-	//ParticleEmitter->DestroyComponent();
-	//ParticleEmitter = nullptr;
+	ParticleEmitter->DestroyComponent();
+	ParticleEmitter = nullptr;
 	Super::DestroyObject();
 }
 
@@ -185,8 +193,8 @@ void UTPS_EffectsToHealth::DestroyObject()
 
 		if (ParticleEmitter)
 		{
-			//ParticleEmitter->DestroyComponent();
-			//ParticleEmitter = nullptr;
+			ParticleEmitter->DestroyComponent();
+			ParticleEmitter = nullptr;
 		}
 	}
 	//increasing health effect
@@ -253,8 +261,8 @@ void UTPS_StunEffect::DestroyObject()
 	
 	if (ParticleEmitter)
 	{
-		//ParticleEmitter->DestroyComponent();
-		//ParticleEmitter = nullptr;
+		ParticleEmitter->DestroyComponent();
+		ParticleEmitter = nullptr;
 	}
 
 	Super::DestroyObject();

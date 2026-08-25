@@ -7,7 +7,6 @@
 #include "Components/SphereComponent.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
-
 #include "TopDownShooter/FuncLibrary/Types.h"
 #include "ProjectileDefault.generated.h"
 
@@ -69,6 +68,10 @@ public:
 	UFUNCTION()
 	virtual void ImpactProjectile();
 
+	void PostNetReceiveVelocity(const FVector& NewVelocity) override;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void InitVelocity_Multicast(float initSpeed, float maxSpeed);
 	UFUNCTION(NetMulticast, Reliable)
 	void InitVisualMeshProjectile_Multicast(UStaticMesh* newMesh, FTransform meshRelative);
 	UFUNCTION(NetMulticast, Reliable)

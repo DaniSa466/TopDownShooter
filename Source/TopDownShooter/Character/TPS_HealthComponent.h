@@ -50,6 +50,8 @@ protected:
 	float maxHealth = 100.f;
 	UPROPERTY(Replicated)
 	float HealthValue = 100.f;
+	UPROPERTY(Replicated)
+	bool isAlive = true;
 
 public:	
 	// Called every frame
@@ -67,6 +69,8 @@ public:
 	float GetCurrentHealth();
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	void SetCurrentHealth(float SetHealth);
+	UFUNCTION(BlueprintCallable, Category = "Health")
+	bool GetIsAlive();
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Health")
 	virtual void ChangeCurrentHealth_OnServer(float ChangeValue);
 

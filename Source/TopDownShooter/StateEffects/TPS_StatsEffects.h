@@ -25,6 +25,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
 	bool bIsStackable = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	bool isAutoDestroy = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stun Effect Setting")
 	UParticleSystem* ParticleEffect = nullptr;
@@ -32,13 +34,16 @@ public:
 
 	AActor* newActor = nullptr;
 
+	UPROPERTY(Replicated)
 	FName boneName;
 
-	bool IsSupportedForNetworking() const override { return true; }
+	bool IsSupportedForNetworking() const override { return true; };
 	virtual bool InitObject(AActor* ActorToInit, FName hitBoneName);
 	virtual void DestroyObject();
 
 	virtual bool ChackStackableEffect();
+
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
 
 UCLASS(Blueprintable, BlueprintType)

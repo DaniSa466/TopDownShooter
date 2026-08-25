@@ -5,7 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 
-int32 DebugExplosionShow = 1;
+int32 DebugExplosionShow = 0;
 FAutoConsoleVariableRef CVARExplodeShow(
 	TEXT("TPS.DebugExplode"), DebugExplosionShow,
 	TEXT("Draw Debug For Explode"), ECVF_Cheat

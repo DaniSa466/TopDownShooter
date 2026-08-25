@@ -22,6 +22,9 @@ class ATopDownShooterCharacter : public ACharacter, public ITPS_GameActorsInterf
 	GENERATED_BODY()
 
 protected:
+	bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch,
+		FReplicationFlags* RepFlags) override;
+
 	virtual void BeginPlay() override;
 
 	/** Top down camera */
@@ -82,7 +85,8 @@ protected:
 	//Health functions
 	UFUNCTION()
 	void CharDead();
-	void EnableRagDoll();
+	UFUNCTION(NetMulticast, Reliable)
+	void EnableRagDoll_Multicast();
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
 		class AController* EventInstigator, AActor* DamageCauser) override;
 
@@ -155,8 +159,6 @@ public:
 	FVector MovingDirection;
 
 	//Health variables
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
-	bool IsAlive = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
 	TArray<UAnimMontage*> DeadAnimations;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
@@ -245,6 +247,10 @@ public:
 	void OnRep_EffectToAdd();
 	UFUNCTION()
 	void OnRep_EffectToRemove();
+	UFUNCTION(Server, Reliable)
+	void ExecuteEffectAdd_OnServer(UParticleSystem* effectFX);
+	UFUNCTION(NetMulticast, Reliable)
+	void ExecuteEffectAdd_Multicast(UParticleSystem* effectFX);
 	UFUNCTION()
 	void SwitchEffect(UTPS_StatsEffects* newEffect, bool bIsAdd);
 
@@ -262,9 +268,6 @@ public:
 	void TryReloadWeapon_OnServer();
 	UFUNCTION(NetMulticast, Unreliable)
 	void PlayAnim_Multicast(UAnimMontage* anim);
-
-	bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, 
-		FReplicationFlags* RepFlags) override;
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

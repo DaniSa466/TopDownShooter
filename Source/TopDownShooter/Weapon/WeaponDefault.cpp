@@ -738,7 +738,7 @@ void AWeaponDefault::InitEffectsByTraceHit_Multicast_Implementation(const TArray
 	bool server = HasAuthority();
 	UE_LOG(LogTemp, Warning, TEXT("InitEffectByTrace -- server = %s"), server ? TEXT("TRUE") : TEXT("false"));
 
-	for (int32 i = 0; i < impactPoints.Num(); i++)
+	for (int8 i = 0; i < impactPoints.Num(); i++)
 	{
 		if (decals.IsValidIndex(i) && decals[i] && components.IsValidIndex(i) && components[i])
 			UGameplayStatics::SpawnDecalAttached(decals[i], FVector(20.f),
