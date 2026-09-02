@@ -11,10 +11,13 @@
 #include "TopDownShooterCharacter.generated.h"
 
 class UTPS_StatsEffects;
+class UTPS_TemporaryEffect;
 class UTPS_CharHealthComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnEnableSpeedUpEffect);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDisableSpeedUpEffect);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFireBulletsEffectEnable, int32, weaponIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFireBulletsEffectDisable);
 
 UCLASS(Blueprintable)
 class ATopDownShooterCharacter : public ACharacter, public ITPS_GameActorsInterface
@@ -59,6 +62,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 	TArray<UParticleSystemComponent*> particleSystemEffects;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effects")
+	TSubclassOf<UTPS_StatsEffects> burnEffect;
 
 	//inputs
 	void InputAxisX(float Value);
@@ -116,6 +122,8 @@ private:
 
 	//coef for effects
 	float speedUpCoef = 1.f;
+	bool isFireBulletEffect = false;
+	FTimerHandle fireBulletsEffectTimerHandle;
 
 public:
 	//delegates
@@ -124,6 +132,12 @@ public:
 
 	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite)
 	FOnDisableSpeedUpEffect OnDisableSpeedUpEffect;
+
+	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite)
+	FOnFireBulletsEffectEnable OnFireBulletsEffectEnable;
+
+	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite)
+	FOnFireBulletsEffectDisable OnFireBulletsEffectDisable;
 
 	//variables
 	//cursor
@@ -213,6 +227,11 @@ public:
 	UFUNCTION(Server, Reliable)
 	void TrySwitchWeaponToIndexByKeyInput_OnServer(int32 index);
 	void DropCurrentWeapon();
+
+	UFUNCTION(BlueprintCallable)
+	void EnableFireBulletsEffect();
+	UFUNCTION(BlueprintCallable)
+	void DisableFireBulletsEffect();
 
 	UFUNCTION()
 	void WeaponFire(UAnimMontage* Anim);

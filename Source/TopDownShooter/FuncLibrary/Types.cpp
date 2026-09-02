@@ -7,7 +7,8 @@
 #include "GameFramework/Character.h"
 #include "TopDownShooter/Game/TPS_GameActorsInterface.h"
 
-void UTypes::AddEffectBySurfaceType(AActor* TakeEffectActor, FName hitBoneName, TSubclassOf<UTPS_StatsEffects> AddEffectClass, EPhysicalSurface PhysSurface)
+void UTypes::AddEffectBySurfaceType(AActor* TakeEffectActor, FName hitBoneName, 
+	TSubclassOf<UTPS_StatsEffects> AddEffectClass, EPhysicalSurface PhysSurface)
 {
 	if (PhysSurface != EPhysicalSurface::SurfaceType_Default && TakeEffectActor && AddEffectClass)
 	{
@@ -22,7 +23,7 @@ void UTypes::AddEffectBySurfaceType(AActor* TakeEffectActor, FName hitBoneName, 
 				if (myEffect->PossibleInteractSurface[i] == PhysSurface)
 				{
 					bHasPossibleSurface = true;
-					bool EffectCanBeAdded = false;
+					bool EffectCanBeAdded = true;
 					if (!myEffect->bIsStackable)
 					{
 						int8 j = 0;
@@ -36,8 +37,8 @@ void UTypes::AddEffectBySurfaceType(AActor* TakeEffectActor, FName hitBoneName, 
 						{
 							while (j < CurrentEffects.Num() && EffectCanBeAdded)
 							{
-								if (CurrentEffects[j]->GetClass() != AddEffectClass)
-									EffectCanBeAdded = true;
+								if (CurrentEffects[j]->GetClass() == AddEffectClass)
+									EffectCanBeAdded = false;
 								j++;
 							}
 						}

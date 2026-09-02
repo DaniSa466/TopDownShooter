@@ -505,6 +505,46 @@ void ATopDownShooterCharacter::DropCurrentWeapon()
 	}
 }
 
+void ATopDownShooterCharacter::EnableFireBulletsEffect()
+{
+	if (GetWorld())
+	{
+		if (burnEffect)
+		{
+			if (isFireBulletEffect)
+			{
+				GetWorld()->GetTimerManager().ClearTimer(fireBulletsEffectTimerHandle);
+			}
+			else
+			{
+				isFireBulletEffect = true;
+				if (CurrentWeapon)
+				{
+					CurrentWeapon->WeaponSettings.ProjectileSetting.Effect = burnEffect;
+					OnFireBulletsEffectEnable.Broadcast(CurrentIndexWeapon);
+				}
+			}
+			GetWorld()->GetTimerManager().SetTimer(fireBulletsEffectTimerHandle, this, 
+				&ATopDownShooterCharacter::DisableFireBulletsEffect, 5.f, false);
+		}
+	}
+}
+
+void ATopDownShooterCharacter::DisableFireBulletsEffect()
+{
+	if (GetWorld())
+	{
+		isFireBulletEffect = false;
+
+		if (CurrentWeapon)
+		{
+			CurrentWeapon->WeaponSettings.ProjectileSetting.Effect = nullptr;
+			OnFireBulletsEffectDisable.Broadcast();
+			GetWorld()->GetTimerManager().ClearTimer(fireBulletsEffectTimerHandle);
+		}
+	}
+}
+
 void ATopDownShooterCharacter::WeaponFire(UAnimMontage* Anim)
 {
 	if (InventoryComponent && CurrentWeapon)
