@@ -33,7 +33,9 @@ bool ATPS_EnvironmentStructure::ReplicateSubobjects(UActorChannel* Channel,
 	for (int32 i = 0; i < Effects.Num(); i++)
 	{
 		if (Effects[i])
+		{
 			wrote |= Channel->ReplicateSubobject(Effects[i], *Bunch, *RepFlags);
+		}
 	}
 
 	return wrote;
@@ -70,8 +72,6 @@ TArray<UTPS_StatsEffects*> ATPS_EnvironmentStructure::GetCurrentEffects()
 
 void ATPS_EnvironmentStructure::RemoveEffect(UTPS_StatsEffects* effectToRemove)
 {
-	//effectToRemove->BeginDestroy();
-
 	Effects.Remove(effectToRemove);
 
 	SwitchEffect(effectToRemove, false);
@@ -88,20 +88,28 @@ void ATPS_EnvironmentStructure::AddEffect(UTPS_StatsEffects* effectToAdd)
 		effectAdd = effectToAdd;
 	}
 	else
+	{
 		if (effectToAdd->ParticleEffect)
+		{
 			ExecuteEffectAdd_OnServer(effectToAdd->ParticleEffect);
+		}
+	}
 }
 
 void ATPS_EnvironmentStructure::OnRep_EffectAdd()
 {
 	if (effectAdd)
+	{
 		SwitchEffect(effectAdd, true);
+	}
 }
 
 void ATPS_EnvironmentStructure::OnRep_EffectRemove()
 {
 	if (effectRemove)
+	{
 		SwitchEffect(effectRemove, false);
+	}
 }
 
 void ATPS_EnvironmentStructure::ExecuteEffectAdd_OnServer_Implementation(UParticleSystem* effectFX)
@@ -146,8 +154,6 @@ void ATPS_EnvironmentStructure::SwitchEffect(UTPS_StatsEffects* effect, bool bIs
 			{
 				bIsFound = true;
 				particleSystemEffects[i]->DeactivateSystem();
-				//newEffect->DestroyObject();
-				//particleSystemEffects[i]->DestroyComponent();
 				particleSystemEffects.RemoveAt(i);
 			}
 

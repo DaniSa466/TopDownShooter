@@ -16,7 +16,9 @@ bool UTPS_StatsEffects::InitObject(AActor* ActorToInit, FName hitBoneName)
 
 	ITPS_GameActorsInterface* myInterface = Cast<ITPS_GameActorsInterface>(newActor);
 	if (myInterface)
+	{
 		myInterface->AddEffect(this);
+	}
 
 	return true;
 }
@@ -25,7 +27,9 @@ void UTPS_StatsEffects::DestroyObject()
 {
 	ITPS_GameActorsInterface* myInterface = Cast<ITPS_GameActorsInterface>(newActor);
 	if (myInterface)
+	{
 		myInterface->RemoveEffect(this);
+	}
 
 	newActor = nullptr;
 
@@ -68,7 +72,9 @@ void UTPS_EffectExecuteOnce::ExecuteOnce()
 			(newActor->GetComponentByClass(UTPS_HealthComponent::StaticClass()));
 
 		if (EffectPointerToHealthComponent)
+		{
 			EffectPointerToHealthComponent->ChangeCurrentHealth_OnServer(Power);
+		}
 	}
 
 	DestroyObject();
@@ -111,10 +117,14 @@ bool UTPS_TemporaryEffect::InitObject(AActor* ActorToInit, FName hitBoneName)
 void UTPS_TemporaryEffect::DestroyObject()
 {
 	if (GetWorld())
+	{
 		GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
+	}
 
 	if (ParticleEmitter == nullptr)
+	{
 		return Super::DestroyObject();
+	}
 
 	ParticleEmitter->DestroyComponent();
 	ParticleEmitter = nullptr;
@@ -128,7 +138,9 @@ void UTPS_TemporaryEffect::Execute()
 		UTPS_HealthComponent* EffectPointerToHealthComponent = Cast<UTPS_HealthComponent>
 			(newActor->GetComponentByClass(UTPS_HealthComponent::StaticClass()));
 		if (EffectPointerToHealthComponent)
+		{
 			EffectPointerToHealthComponent->ChangeCurrentHealth_OnServer(Power);
+		}
 	}
 }
 
@@ -138,13 +150,17 @@ bool UTPS_SpeedUpEffect::InitObject(AActor* ActorToSpeedUp, FName hitBoneName)
 	pointerToCharacter = Cast<ATopDownShooterCharacter>(ActorToSpeedUp);
 
 	if (!pointerToCharacter)
+	{
 		return false;
+	}
 
 	IncreaseSpeed();
 
 	if (GetWorld())
+	{
 		GetWorld()->GetTimerManager().SetTimer(decreaseTimer, this,
 			&UTPS_SpeedUpEffect::DestroyObject, speedUpTimer, false);
+	}
 
 	return true;
 }
@@ -169,17 +185,23 @@ bool UTPS_EffectsToHealth::InitObject(AActor* actorToInit, FName hitBoneName)
 	pointerToCharacter = Cast<ATopDownShooterCharacter>(actorToInit);
 
 	if (!pointerToCharacter)
+	{
 		return false;
+	}
 
 	pointerToHealthComponent = pointerToCharacter->HealthComponent;
 	if (!pointerToHealthComponent)
+	{
 		return false;
+	}
 
 	ChangeHealthCoef();
 
 	if(GetWorld())
-		GetWorld()->GetTimerManager().SetTimer(backTimer, this, 
+	{
+		GetWorld()->GetTimerManager().SetTimer(backTimer, this,
 			&UTPS_EffectsToHealth::DestroyObject, timer, false);
+	}
 
 	return true;
 }
@@ -226,9 +248,11 @@ void UTPS_EffectsToHealth::ChangeHealthCoef()
 					EAttachLocation::SnapToTarget, false);
 			}
 			else
+			{
 				ParticleEmitter = UGameplayStatics::SpawnEmitterAttached(ParticleEffect,
-				characterMesh, BoneNameToAttachEffect, FVector::ZeroVector,
-				FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+					characterMesh, BoneNameToAttachEffect, FVector::ZeroVector,
+					FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+			}
 		}
 	}
 	//increasing health effect
@@ -244,13 +268,17 @@ bool UTPS_StunEffect::InitObject(AActor* ActorToStun, FName hitBoneName)
 	pointerToCharacter = Cast<ATopDownShooterCharacter>(ActorToStun);
 
 	if (!pointerToCharacter)
+	{
 		return false;
+	}
 
 	ChangeCharacterInputStatus(true);
 
 	if (GetWorld())
-		GetWorld()->GetTimerManager().SetTimer(stunTimer, this, 
+	{
+		GetWorld()->GetTimerManager().SetTimer(stunTimer, this,
 			&UTPS_StunEffect::DestroyObject, timer, false);
+	}
 
 	return true;
 }
@@ -273,7 +301,9 @@ void UTPS_StunEffect::ChangeCharacterInputStatus(bool isStun)
 	if (isStun)
 	{
 		if (loopAnimation)
+		{
 			pointerToCharacter->PlayAnimMontage(loopAnimation);
+		}
 
 		pointerToCharacter->ResSpeed = 0;
 		pointerToCharacter->DisableInput(Cast<APlayerController>(pointerToCharacter->GetController()));
@@ -291,9 +321,11 @@ void UTPS_StunEffect::ChangeCharacterInputStatus(bool isStun)
 					EAttachLocation::SnapToTarget, false);
 			}
 			else
+			{
 				ParticleEmitter = UGameplayStatics::SpawnEmitterAttached(ParticleEffect,
 					characterMesh, BoneNameToAttachEffect, FVector::ZeroVector,
 					FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+			}
 		}
 	}
 	else

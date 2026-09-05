@@ -31,22 +31,30 @@ void UTypes::AddEffectBySurfaceType(AActor* TakeEffectActor, FName hitBoneName,
 						ITPS_GameActorsInterface* myInterface = Cast<ITPS_GameActorsInterface>(TakeEffectActor);
 
 						if (myInterface)
+						{
 							CurrentEffects = myInterface->GetCurrentEffects();
+						}
 
 						if (CurrentEffects.Num() > 0)
 						{
 							while (j < CurrentEffects.Num() && EffectCanBeAdded)
 							{
 								if (CurrentEffects[j]->GetClass() == AddEffectClass)
+								{
 									EffectCanBeAdded = false;
+								}
 								j++;
 							}
 						}
 						else
+						{
 							EffectCanBeAdded = true;
+						}
 					}
 					else
+					{
 						EffectCanBeAdded = true;
+					}
 
 					if (EffectCanBeAdded)
 					{
@@ -54,7 +62,9 @@ void UTypes::AddEffectBySurfaceType(AActor* TakeEffectActor, FName hitBoneName,
 						UTPS_StatsEffects* newEffect = NewObject<UTPS_StatsEffects>(TakeEffectActor, AddEffectClass);
 
 						if (newEffect)
+						{
 							newEffect->InitObject(TakeEffectActor, hitBoneName);
+						}
 					}
 				}
 				i++;
@@ -71,14 +81,22 @@ void UTypes::ExecuteEffectAdded(UParticleSystem* executeFX, AActor* target,
 		FName socketToAttach = socket;
 		FVector location = offset;
 		ACharacter* myChar = Cast<ACharacter>(target);
+
 		if (myChar && myChar->GetMesh())
+		{
 			UGameplayStatics::SpawnEmitterAttached(executeFX, myChar->GetMesh(),
 				socketToAttach, location, FRotator::ZeroRotator,
 				EAttachLocation::SnapToTarget, false);
+		}
+
 		else
+		{
 			if (target->GetRootComponent())
+			{
 				UGameplayStatics::SpawnEmitterAttached(executeFX, target->GetRootComponent(),
 					socketToAttach, location, FRotator::ZeroRotator,
 					EAttachLocation::SnapToTarget, false);
+			}
+		}
 	}
 }

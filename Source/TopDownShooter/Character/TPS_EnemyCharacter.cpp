@@ -27,7 +27,9 @@ bool ATPS_EnemyCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch*
 	for (int32 i = 0; i < Effects.Num(); i++)
 	{
 		if (Effects[i])
+		{
 			wrote |= Channel->ReplicateSubobject(Effects[i], *Bunch, *RepFlags);
+		}
 	}
 
 	return wrote;
@@ -66,20 +68,26 @@ void ATPS_EnemyCharacter::AddEffect(UTPS_StatsEffects* effectToAdd)
 	else
 	{
 		if (effectToAdd->ParticleEffect)
+		{
 			ExecuteEffectAdd_OnServer(effectToAdd->ParticleEffect);
+		}
 	}
 }
 
 void ATPS_EnemyCharacter::OnRep_EffectAdd()
 {
 	if (effectAdd)
+	{
 		SwitchEffect(effectAdd, true);
+	}
 }
 
 void ATPS_EnemyCharacter::OnRep_EffectRemove()
 {
 	if (effectRemove)
+	{
 		SwitchEffect(effectRemove, false);
+	}
 }
 
 void ATPS_EnemyCharacter::ExecuteEffectAdd_OnServer_Implementation(UParticleSystem* effectFX)

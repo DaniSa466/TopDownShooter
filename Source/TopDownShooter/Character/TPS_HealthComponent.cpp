@@ -81,7 +81,9 @@ void UTPS_HealthComponent::ChangeCurrentHealth_OnServer_Implementation(float Cha
 			}
 
 			if (resistToDamage)
+			{
 				return;
+			}
 
 			ChangeValue *= DamageCoef;
 		}
@@ -94,7 +96,9 @@ void UTPS_HealthComponent::ChangeCurrentHealth_OnServer_Implementation(float Cha
 			HealthValue = maxHealth;
 
 			if (GetWorld() && bCanRegen)
+			{
 				GetWorld()->GetTimerManager().ClearTimer(regen_TimerHandle);
+			}
 		}
 		else
 		{

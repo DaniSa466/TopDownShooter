@@ -10,7 +10,7 @@ AProjectileDefault::AProjectileDefault()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	SetReplicates(true);
+	bReplicates = true;
 	SetReplicateMovement(true);
 
 	BulletCollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Collision Sphere"));
@@ -57,10 +57,14 @@ void AProjectileDefault::BeginPlay()
 		APawn* instigatorPawn = GetInstigator();
 
 		if (ownerActor)
+		{
 			BulletCollisionSphere->IgnoreActorWhenMoving(ownerActor, true);
+		}
 
 		if (instigatorPawn)
+		{
 			BulletCollisionSphere->IgnoreActorWhenMoving(instigatorPawn, true);
+		}
 	}
 }
 
@@ -78,7 +82,9 @@ bool AProjectileDefault::InitProjectile(const FProjectileInfo& InitParam)
 	SetLifeSpan(InitParam.ProjectileLifeTime);
 
 	if (!BulletProjectileMovement)
+	{
 		return false;
+	}
 
 	BulletProjectileMovement->SetVelocityInLocalSpace(FVector::ForwardVector * InitParam.ProjectileInitSpeed);
 
@@ -90,18 +96,22 @@ bool AProjectileDefault::InitProjectile(const FProjectileInfo& InitParam)
 		InitVisualMeshProjectile_Multicast(InitParam.projectileStaticMesh, InitParam.projectileStaticMeshOffset);
 	}
 	else
+	{
 		if (!BulletMesh)
 		{
 			BulletMesh->DestroyComponent();
 			shootByProjectile = false;
 		}
+	}
 
 	if (InitParam.ProjectileTrialFX)
 	{
 		InitVisualTrailProjectile_Multicast(InitParam.ProjectileTrialFX, InitParam.ProjectileTrialFXOffset);
 	}
 	else
+	{
 		BulletFX->DestroyComponent();
+	}
 
 
 	InitVelocity_Multicast(InitParam.ProjectileInitSpeed, InitParam.ProjectileMaxSpeed);
@@ -115,10 +125,14 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp,
 	FVector NormalImpulse, const FHitResult& Hit)
 {
 	if (!HasAuthority())
+	{
 		return;
+	}
 
 	if (!OtherActor || OtherActor == GetOwner() || OtherActor == GetInstigator())
+	{
 		return;
+	}
 
 	if (OtherActor && Hit.PhysMaterial.IsValid())
 	{
@@ -129,7 +143,9 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp,
 			UMaterialInterface* MyMaterial = ProjectileSetting.HitDecals[MySurfaceType];
 
 			if (MyMaterial && OtherComp)
+			{
 				SpawnHitDecal_Multicast(MyMaterial, OtherComp, Hit);
+			}
 		}
 
 		if (ProjectileSetting.HitFXs.Contains(MySurfaceType))
@@ -137,11 +153,15 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp,
 			UParticleSystem* MyParticle = ProjectileSetting.HitFXs[MySurfaceType];
 
 			if (MyParticle)
+			{
 				SpawnHitFX_Multicast(MyParticle, Hit);
+			}
 		}
 
 		if (ProjectileSetting.HitSound)
+		{
 			SpawnHitSound_Multicast(ProjectileSetting.HitSound, Hit);
+		}
 
 		UTypes::AddEffectBySurfaceType(Hit.GetActor(), Hit.BoneName, ProjectileSetting.Effect, MySurfaceType);
 	}
@@ -174,7 +194,9 @@ void AProjectileDefault::ImpactProjectile()
 void AProjectileDefault::PostNetReceiveVelocity(const FVector& NewVelocity)
 {
 	if (BulletProjectileMovement)
+	{
 		BulletProjectileMovement->Velocity = NewVelocity;
+	}
 }
 
 void AProjectileDefault::InitVelocity_Multicast_Implementation(float initSpeed, float maxSpeed)

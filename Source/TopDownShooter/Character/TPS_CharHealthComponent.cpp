@@ -3,16 +3,37 @@
 
 #include "TPS_CharHealthComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "TopDownShooter/Character/TopDownShooterCharacter.h"
+#include "TopDownShooter/StateEffects/TPS_StatsEffects.h"
+#include "TopDownShooter/FuncLibrary/Types.h"
 
 void UTPS_CharHealthComponent::ChangeCurrentHealth_OnServer(float ChangeValue)
 {
 	float DamageOnShield = ChangeValue * DamageCoef;
 
+	if (ChangeValue < 0.f)
+	{
+		bool isStun = FMath::FRand() < stunChance;
+
+		if (isStun)
+		{
+			ATopDownShooterCharacter* character = Cast<ATopDownShooterCharacter>(GetOwner());
+			if (character && stunEffect)
+			{
+				UTypes::AddEffectBySurfaceType(character, NAME_None, stunEffect, EPhysicalSurface::SurfaceType3);
+			}
+		}
+	}
+
 	if (ShieldStrenghtVar > 0.0f && ChangeValue < 0.f)
+	{
 		ChangeShieldStrenght(DamageOnShield);
+	}
 	
 	else
+	{
 		Super::ChangeCurrentHealth_OnServer(ChangeValue);
+	}
 }
 
 void UTPS_CharHealthComponent::ChangeShieldStrenght(float ChangeValue)
@@ -20,10 +41,16 @@ void UTPS_CharHealthComponent::ChangeShieldStrenght(float ChangeValue)
 	ShieldStrenghtVar += ChangeValue;
 
 	if (ShieldStrenghtVar > MaxShieldStrenght)
+	{
 		ShieldStrenghtVar = MaxShieldStrenght;
+	}
 	else
+	{
 		if (ShieldStrenghtVar <= 0.0f)
+		{
 			ShieldStrenghtVar = 0.0f;
+		}
+	}
 
 	ShieldChangeStrenghtEvent_Multicast(ShieldStrenghtVar, ChangeValue);
 
@@ -44,6 +71,7 @@ void UTPS_CharHealthComponent::ChangeShieldStrenght(float ChangeValue)
 		}
 	}
 	else
+	{
 		if (GetWorld())
 		{
 			GetWorld()->GetTimerManager().ClearTimer(TimerHandle_ShieldRecoveryRateTimer);
@@ -52,6 +80,7 @@ void UTPS_CharHealthComponent::ChangeShieldStrenght(float ChangeValue)
 				this, &UTPS_CharHealthComponent::ShieldCoolDownEnd,
 				CoolDownShieldRecoveryTime, false);
 		}
+	}
 }
 
 float UTPS_CharHealthComponent::GetShieldStrenght()
@@ -85,7 +114,9 @@ void UTPS_CharHealthComponent::RecoveryShield()
 		ShieldRecoveredEvent_Multicast();
 	}
 	else
+	{
 		ShieldStrenghtVar = ShieldValueInNextStep;
+	}
 
 	ShieldChangeStrenghtEvent_Multicast(ShieldStrenghtVar, ShieldRecoveryValue);
 }

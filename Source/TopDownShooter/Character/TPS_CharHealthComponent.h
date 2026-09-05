@@ -11,6 +11,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthIncreaseEffect, float, max
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnShieldBroken);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnShieldRecovered);
 
+class UTPS_StatsEffects;
+
 UCLASS()
 class TOPDOWNSHOOTER_API UTPS_CharHealthComponent : public UTPS_HealthComponent
 {
@@ -35,6 +37,10 @@ public:
 protected:
 	float ShieldStrenghtVar = 100.f;
 	float MaxShieldStrenght = 100.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AntiBonus")
+	TSubclassOf<UTPS_StatsEffects> stunEffect;
+	float stunChance = 0.1f;
 
 public:
 	//variables for Shield Recoverying logic

@@ -68,10 +68,13 @@ void AWeaponDefault::FireTick(float DeltaTime)
 	if (WeaponFiring)
 	{
 		if (FireTime <= 0.f)
+		{
 			Fire();
-
+		}
 		else
+		{
 			FireTime -= DeltaTime;
+		}
 	}
 }
 
@@ -80,9 +83,13 @@ void AWeaponDefault::ReloadTick(float DeltaTime)
 	if (WeaponReloading)
 	{
 		if (ReloadTimer < 0)
+		{
 			FinishReload();
+		}
 		else
+		{
 			ReloadTimer -= DeltaTime;
+		}
 	}
 }
 
@@ -93,17 +100,27 @@ void AWeaponDefault::DispersionTick(float DeltaTime)
 		if (!WeaponFiring)
 		{
 			if (ShouldReduceDispersion)
+			{
 				CurrentDispersion -= CurrentDispersionReduction;
+			}
 			else
+			{
 				CurrentDispersion += CurrentDispersionReduction;
+			}
 		}
 
 		if (CurrentDispersion < CurrentDispersionMin)
+		{
 			CurrentDispersion = CurrentDispersionMin;
+		}
 
 		else
+		{
 			if (CurrentDispersion > CurrentDispersionMax)
+			{
 				CurrentDispersion = CurrentDispersionMax;
+			}
+		}
 	}
 
 	else
@@ -111,13 +128,16 @@ void AWeaponDefault::DispersionTick(float DeltaTime)
 		CurrentDispersion -= CurrentDispersionReduction;
 
 		if (CurrentDispersion < CurrentDispersionMin)
+		{
 			CurrentDispersion = CurrentDispersionMin;
+		}
 	}
 }
 
 void AWeaponDefault::ClipDropTick(float DeltaTime)
 {
 	if (DropClipFlag)
+	{
 		if (DropClipTimer < 0.0f)
 		{
 			DropClipFlag = false;
@@ -127,12 +147,16 @@ void AWeaponDefault::ClipDropTick(float DeltaTime)
 				WeaponSettings.ClipDropMesh.CustomMass);
 		}
 		else
+		{
 			DropClipTimer -= DeltaTime;
+		}
+	}
 }
 
 void AWeaponDefault::ShellDropTick(float DeltaTime)
 {
 	if (DropShellFlag)
+	{
 		if (DropShellTimer <= 0.0f)
 		{
 			DropShellFlag = false;
@@ -142,7 +166,10 @@ void AWeaponDefault::ShellDropTick(float DeltaTime)
 				WeaponSettings.ShellDropMesh.CustomMass);
 		}
 		else
+		{
 			DropShellTimer -= DeltaTime;
+		}
+	}
 }
 
 void AWeaponDefault::WeaponInit()
@@ -161,7 +188,9 @@ void AWeaponDefault::WeaponInit()
 void AWeaponDefault::SetWeaponStateFire_OnServer_Implementation(bool bIsFire)
 {
 	if (CheckWeaponCanFire())
+	{
 		WeaponFiring = bIsFire;
+	}
 	else
 	{
 		WeaponFiring = false;
@@ -188,30 +217,39 @@ void AWeaponDefault::Fire()
 		// may be will be changed
 		UAnimMontage* AnimToPlay = nullptr;
 		if (WeaponAiming)
+		{
 			AnimToPlay = WeaponSettings.AnimWeaponInfo.AnimCharAimFire;
+		}
 		else
+		{
 			AnimToPlay = WeaponSettings.AnimWeaponInfo.AnimCharStandFire;
+		}
 
 		if (WeaponSettings.AnimWeaponInfo.AnimWeaponFire)
+		{
 			WeaponAnimationStart_Multicast(WeaponSettings.AnimWeaponInfo.AnimWeaponFire);
+		}
 
 		if (WeaponSettings.ShellDropMesh.DropMesh)
+		{
 			if (WeaponSettings.ShellDropMesh.DropMeshTime < 0.0f)
+			{
 				InitDropMesh_OnServer(WeaponSettings.ShellDropMesh.DropMesh, WeaponSettings.ShellDropMesh.DropMeshOffset,
 					WeaponSettings.ShellDropMesh.DropMeshImpulsDirection, WeaponSettings.ShellDropMesh.DropMeshLifeTime,
 					WeaponSettings.ShellDropMesh.ImpulsRandomDispersion, WeaponSettings.ShellDropMesh.PowerImpuls,
 					WeaponSettings.ShellDropMesh.CustomMass);
+			}
 			else
 			{
 				DropShellFlag = true;
 				DropShellTimer = WeaponSettings.ShellDropMesh.DropMeshTime;
 			}
+		}
 
 		FireTime = WeaponSettings.RateOfFire;
 		AdditionalWeaponInfo.Round--;
 		ChangeDispersionByShoot();
 
-		//if (AnimToPlay)
 		OnWeaponFire.Broadcast(AnimToPlay);
 
 		SoundAndFXWeaponFire_Multicast(WeaponSettings.EffectFireWeapon, WeaponSettings.SoundFireWeapon);
@@ -239,7 +277,6 @@ void AWeaponDefault::Fire()
 
 					FMatrix myMatrix(Dir, FVector(0, 0, 0), FVector(0, 0, 0), FVector::ZeroVector);
 					SpawnRotation = myMatrix.Rotator();
-					//SpawnRotation = Dir.Rotation();
 
 					APawn* ownerPawn = Cast<APawn>(GetOwner());
 
@@ -260,7 +297,9 @@ void AWeaponDefault::Fire()
 					{
 						myProjectile->Destroy();
 						if (tracesEndLoc.Num() == NumberProjectile - 1)
+						{
 							callInitTraceMulticast = true;
+						}
 
 						InitTrace_OnServer(SpawnLocation, EndLocation, callInitTraceMulticast);
 					}
@@ -269,7 +308,9 @@ void AWeaponDefault::Fire()
 				{
 					//Shoot with trace
 					if (tracesEndLoc.Num() == NumberProjectile - 1)
+					{
 						callInitTraceMulticast = true;
+					}
 
 					InitTrace_OnServer(SpawnLocation, EndLocation, callInitTraceMulticast);
 				}
@@ -277,8 +318,12 @@ void AWeaponDefault::Fire()
 		}
 	}
 	else
+	{
 		if (!WeaponReloading && CheckWeaponCanBeReloaded())
+		{
 			InitReload();
+		}
+	}
 }
 
 void AWeaponDefault::UpdateStateWeapon_OnServer_Implementation(EMovementState NewMovementState)
@@ -366,19 +411,23 @@ FVector AWeaponDefault::GetFireEndLocation() const
 		DirectionShoot = ShootLocation->GetComponentLocation() - ShootEndLocation;
 		EndLocation = ShootLocation->GetComponentLocation() + ApplyDispersionToShoot((DirectionShoot).GetSafeNormal()) * -20000.f;
 		if (ShowDebug)
-			DrawDebugCone(GetWorld(), ShootLocation->GetComponentLocation(), -DirectionShoot, 
-				WeaponSettings.DistanceTrace, GetCurrentDispersion() * PI / 180.f, GetCurrentDispersion() * PI / 180.f, 
+		{
+			DrawDebugCone(GetWorld(), ShootLocation->GetComponentLocation(), -DirectionShoot,
+				WeaponSettings.DistanceTrace, GetCurrentDispersion() * PI / 180.f, GetCurrentDispersion() * PI / 180.f,
 				32, FColor::Emerald, false, .1f, (uint8)'\000', 1.0f);
+		}
 	}
 	else
 	{
 		DirectionShoot = ShootLocation->GetForwardVector();
 		EndLocation = ShootLocation->GetComponentLocation() + ApplyDispersionToShoot(DirectionShoot) * 20000.f;
 		if (ShowDebug)
-		DrawDebugCone(GetWorld(), ShootLocation->GetComponentLocation(),
-			DirectionShoot, WeaponSettings.DistanceTrace,
-			GetCurrentDispersion() * PI / 180.f, GetCurrentDispersion() * PI / 180.f,
-			32, FColor::Emerald, false, .1f, (uint8)'\000', 1.f);
+		{
+			DrawDebugCone(GetWorld(), ShootLocation->GetComponentLocation(),
+				DirectionShoot, WeaponSettings.DistanceTrace,
+				GetCurrentDispersion() * PI / 180.f, GetCurrentDispersion() * PI / 180.f,
+				32, FColor::Emerald, false, .1f, (uint8)'\000', 1.f);
+		}
 	}
 
 	if (ShowDebug)
@@ -393,8 +442,6 @@ FVector AWeaponDefault::GetFireEndLocation() const
 		//diretcion projectile current fly
 		DrawDebugLine(GetWorld(), ShootLocation->GetComponentLocation(), EndLocation, 
 			FColor::Black, false, 5.f, (uint8)'\000', 0.5f);
-
-		//DrawDebugSphere(GetWorld(), ShootLocation->GetComponentLocation() + ShootLocation->GetForwardVector()*SizeVectorToChangeShootDirectionLogic, 10.f, 8, FColor::Red, false, 4.0f);
 	}
 
 	return EndLocation;
@@ -420,27 +467,40 @@ void AWeaponDefault::InitReload()
 
 		UAnimMontage* AnimToPlay = nullptr;
 		if (WeaponAiming)
+		{
 			AnimToPlay = WeaponSettings.AnimWeaponInfo.AnimCharAimReload;
+		}
 		else
+		{
 			AnimToPlay = WeaponSettings.AnimWeaponInfo.AnimCharStandReload;
+		}
 		if (AnimToPlay)
+		{
 			OnWeaponReloadStart.Broadcast(AnimToPlay);
+		}
 		else
+		{
 			if (ATopDownShooterCharacter* pointerToCharacter = Cast<ATopDownShooterCharacter>(GetOwner()))
 			{
 				pointerToCharacter->WeaponReloadStart(AnimToPlay);
 				pointerToCharacter = nullptr;
 			}
+		}
 
 		UAnimMontage* AnimWeaponToPlay = nullptr;
 		if (WeaponAiming)
+		{
 			AnimWeaponToPlay = WeaponSettings.AnimWeaponInfo.AnimWeaponAimReload;
+		}
 		else
+		{
 			AnimWeaponToPlay = WeaponSettings.AnimWeaponInfo.AnimWeaponReload;
+		}
 
 		if (AnimWeaponToPlay && SkeletalMeshWeapon && SkeletalMeshWeapon->GetAnimInstance())
+		{
 			WeaponAnimationStart_Multicast(AnimWeaponToPlay);
-		//SkeletalMeshWeapon->GetAnimInstance()->Montage_Play(AnimWeaponToPlay); del
+		}
 
 		if (WeaponSettings.ClipDropMesh.DropMesh)
 		{
@@ -458,19 +518,29 @@ void AWeaponDefault::FinishReload()
 	int8 AvialableAmmo;
 
 	if (GetAvialableAmmo() > WeaponSettings.MaxRound)
+	{
 		AvialableAmmo = WeaponSettings.MaxRound;
+	}
 	else
+	{
 		AvialableAmmo = GetAvialableAmmo();
+	}
 
 	int8 AmmoTaken = WeaponSettings.MaxRound - AdditionalWeaponInfo.Round;
 
 	if (AmmoTaken > AvialableAmmo)
+	{
 		AdditionalWeaponInfo.Round += AvialableAmmo;
+	}
 	else
+	{
 		AdditionalWeaponInfo.Round += AmmoTaken;
+	}
 
 	if (AmmoTaken > AvialableAmmo)
+	{
 		AmmoTaken = AvialableAmmo;
+	}
 	OnWeaponReloadEnd.Broadcast(true, -AmmoTaken);
 	FinishReload_BP();
 }
@@ -480,7 +550,9 @@ void AWeaponDefault::CancelReload()
 	WeaponReloading = false;
 
 	if (SkeletalMeshWeapon && SkeletalMeshWeapon->GetAnimInstance())
+	{
 		SkeletalMeshWeapon->GetAnimInstance()->StopAllMontages(0.15f);
+	}
 
 	OnWeaponReloadEnd.Broadcast(false, 0);
 	DropClipFlag = false;
@@ -575,7 +647,9 @@ void AWeaponDefault::UpdateWeaponByCharacterMovementState_OnServer_Implementatio
 void AWeaponDefault::WeaponAnimationStart_Multicast_Implementation(UAnimMontage* newFireAnim)
 {
 	if (newFireAnim && SkeletalMeshWeapon && SkeletalMeshWeapon->GetAnimInstance())
+	{
 		SkeletalMeshWeapon->GetAnimInstance()->Montage_Play(newFireAnim);
+	}
 }
 
 void AWeaponDefault::ShellDropFire_Multicast_Implementation(UStaticMesh* DropMesh, FTransform Offset, FVector DropImpulseDirection,
@@ -591,8 +665,6 @@ void AWeaponDefault::ShellDropFire_Multicast_Implementation(UStaticMesh* DropMes
 
 	if (ActorToSpawn && ActorToSpawn->GetStaticMeshComponent())
 	{
-
-
 		ActorToSpawn->GetStaticMeshComponent()->SetCollisionProfileName(TEXT("IgnoreOnlyPawn"));
 		ActorToSpawn->GetStaticMeshComponent()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 		ActorToSpawn->GetStaticMeshComponent()->Mobility = EComponentMobility::Movable;
@@ -610,7 +682,9 @@ void AWeaponDefault::ShellDropFire_Multicast_Implementation(UStaticMesh* DropMes
 		ActorToSpawn->InitialLifeSpan = LifeTimeMesh;
 
 		if (CustomMass > 0.0f)
+		{
 			ActorToSpawn->GetStaticMeshComponent()->SetMassOverrideInKg(NAME_None, CustomMass, true);
+		}
 
 		if (!DropImpulseDirection.IsNearlyZero())
 		{
@@ -618,7 +692,9 @@ void AWeaponDefault::ShellDropFire_Multicast_Implementation(UStaticMesh* DropMes
 			localDirection += DropImpulseDirection * 1000.f;
 
 			if (!FMath::IsNearlyZero(ImpulseRandomDispersion))
+			{
 				FinalDirection += UKismetMathLibrary::RandomUnitVectorInConeInDegrees(localDirection, ImpulseRandomDispersion);
+			}
 			FinalDirection.GetSafeNormal(0.0001f);
 
 			ActorToSpawn->GetStaticMeshComponent()->AddImpulse(FinalDirection * PowerImpuls);
@@ -629,9 +705,13 @@ void AWeaponDefault::ShellDropFire_Multicast_Implementation(UStaticMesh* DropMes
 void AWeaponDefault::SoundAndFXWeaponFire_Multicast_Implementation(UParticleSystem* fireFX, USoundBase* fireSound)
 {
 	if (fireFX)
+	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), fireFX, ShootLocation->GetComponentTransform());
+	}
 	if (fireSound)
+	{
 		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), fireSound, ShootLocation->GetComponentLocation());
+	}
 }
 
 void AWeaponDefault::InitTrace_OnServer_Implementation(FVector spawnLocation, FVector endLocation, 
@@ -650,9 +730,11 @@ void AWeaponDefault::InitTrace_OnServer_Implementation(FVector spawnLocation, FV
 	tracesEndLoc.Add(hit.Location);
 
 	if (ShowDebug)
+	{
 		DrawDebugLine(GetWorld(), spawnLocation, spawnLocation +
 			ShootLocation->GetForwardVector() * WeaponSettings.DistanceTrace, FColor::Black, false,
 			5.f, (uint8)'\000', 0.5f);
+	}
 
 	if (callMulticastFunc)
 	{
@@ -677,10 +759,14 @@ void AWeaponDefault::InitTrace_OnServer_Implementation(FVector spawnLocation, FV
 		}
 
 		if (WeaponSettings.ProjectileSetting.HitFXs.Contains(surfaceType))
+		{
 			myParticle = WeaponSettings.ProjectileSetting.HitFXs[surfaceType];
+		}
 
 		if (WeaponSettings.ProjectileSetting.HitSound)
+		{
 			hitSound = WeaponSettings.ProjectileSetting.HitSound;
+		}
 
 		hitImpactPoints.Add(hit.ImpactPoint);
 		hitImpactNormals.Add(hit.ImpactNormal);
@@ -710,24 +796,21 @@ void AWeaponDefault::InitTrace_OnServer_Implementation(FVector spawnLocation, FV
 void AWeaponDefault::InitTrace_Multicast_Implementation(FVector_NetQuantize spawnLocation, 
 	const TArray<FVector>& endLocations)
 {
-	/*if (!HasAuthority())*/
-	{
 		//UParticleSystemComponent* particle = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),
 		//		trace, spawnLocation, (spawnLocation - endLocation).Rotation(), true);
 
 		//if (particle)
 		//	particle->SetVectorParameter("TargetLocation", endLocation);
 
-		FHitResult hit;
-		TArray<AActor*> actors;
+	FHitResult hit;
+	TArray<AActor*> actors;
 
-		for (int8 i = 0; i < endLocations.Num(); i++)
-		{
-			UKismetSystemLibrary::LineTraceSingle(GetWorld(), spawnLocation,
-				endLocations[i], ETraceTypeQuery::TraceTypeQuery4,
-				false, actors, EDrawDebugTrace::ForDuration, hit, true, FLinearColor::Red,
-				FLinearColor::Green, 5.f);
-		}
+	for (int8 i = 0; i < endLocations.Num(); i++)
+	{
+		UKismetSystemLibrary::LineTraceSingle(GetWorld(), spawnLocation,
+			endLocations[i], ETraceTypeQuery::TraceTypeQuery4,
+			false, actors, EDrawDebugTrace::ForDuration, hit, true, FLinearColor::Red,
+			FLinearColor::Green, 5.f);
 	}
 }
 
@@ -741,17 +824,23 @@ void AWeaponDefault::InitEffectsByTraceHit_Multicast_Implementation(const TArray
 	for (int8 i = 0; i < impactPoints.Num(); i++)
 	{
 		if (decals.IsValidIndex(i) && decals[i] && components.IsValidIndex(i) && components[i])
+		{
 			UGameplayStatics::SpawnDecalAttached(decals[i], FVector(20.f),
 				components[i], NAME_None, impactPoints[i], impactNormals[i].Rotation(),
 				EAttachLocation::KeepWorldPosition, 10.f);
+		}
 
 		if (particles.IsValidIndex(i) && particles[i])
+		{
 			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),
 				particles[i], FTransform(impactNormals[i].Rotation(),
 					impactPoints[i], FVector(1.f)));
+		}
 
 		if (sound)
+		{
 			UGameplayStatics::PlaySoundAtLocation(GetWorld(),
 				sound, impactPoints[i]);
+		}
 	}
 }

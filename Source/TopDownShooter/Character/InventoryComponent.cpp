@@ -47,11 +47,16 @@ bool UInventoryComponent::SwitchWeaponToNextOrPrevious(int8 OldIndex, FAdditiona
 			NewIndex++;
 
 			if (NewIndex == WeaponSlots.Num())
+			{
 				NewIndex = 0;
+			}
 
 			if (!WeaponSlots[NewIndex].NameItem.IsNone())
+			{
 				if (WeaponSlots[NewIndex].AdditionalInfo.Round > 0)
+				{
 					SwitchIsSuccess = true;
+				}
 
 				//checking ammo for the weapon in inventory
 				else
@@ -77,6 +82,7 @@ bool UInventoryComponent::SwitchWeaponToNextOrPrevious(int8 OldIndex, FAdditiona
 						}
 					}
 				}
+			}
 			i++;
 		}
 	}
@@ -89,11 +95,17 @@ bool UInventoryComponent::SwitchWeaponToNextOrPrevious(int8 OldIndex, FAdditiona
 			NewIndex--;
 
 			if (NewIndex == -1)
+			{
 				NewIndex = WeaponSlots.Num() - 1;
+			}
 
 			if (!WeaponSlots[NewIndex].NameItem.IsNone())
+			{
 				if (WeaponSlots[NewIndex].AdditionalInfo.Round > 0)
+				{
 					SwitchIsSuccess = true;
+				}
+			}
 				else
 				{
 					FWeaponInfo InfoToType;
@@ -180,7 +192,9 @@ bool UInventoryComponent::CheckAmmoForWeapon(EWeaponType WeaponType, int16 &Avia
 			bIsFound = true;
 			AvialableAmmoForWeapon = AmmoSlots[i].count;
 			if (AmmoSlots[i].count > 0)
+			{
 				return true;
+			}
 		}
 		i++;
 	}
@@ -189,7 +203,9 @@ bool UInventoryComponent::CheckAmmoForWeapon(EWeaponType WeaponType, int16 &Avia
 	{
 		if (InventoryPointerToCharacter->GetCurrentWeapon() &&
 			InventoryPointerToCharacter->GetCurrentWeapon()->AdditionalWeaponInfo.Round == 0)
+		{
 			AmmoEmptyEvent_Multicast(WeaponType); //visual sign for empty ammo
+		}
 
 		InventoryPointerToCharacter = nullptr;
 	}
@@ -214,11 +230,15 @@ FAdditionalWeaponInfo UInventoryComponent::GetAdditionalWeaponInfo(int8 WeaponIn
 			i++;
 		}
 		if (!bIsFound)
+		{
 			UE_LOG(LogTemp, Warning, TEXT("UInventoryComponent::GetAdditionalWeaponInfo - Not found Weapon Index -%d"), WeaponIndex);
+		}
 	}
 
 	else
+	{
 		UE_LOG(LogTemp, Warning, TEXT("UInventoryComponent::GetAdditionalWeaponInfo - Not correct Weapon Index -%d"), WeaponIndex);
+	}
 
 	return result;
 }
@@ -245,7 +265,9 @@ FName UInventoryComponent::GetWeaponNameByIndexSlot(int8 IndexSlot)
 	FName result;
 
 	if (WeaponSlots.IsValidIndex(IndexSlot))
+	{
 		result = WeaponSlots[IndexSlot].NameItem;
+	}
 
 	return result;
 }
@@ -303,11 +325,15 @@ void UInventoryComponent::SetAdditionalWeaponInfo(int8 WeaponIndex, FAdditionalW
 		}
 
 		if (!bIsFound)
+		{
 			UE_LOG(LogTemp, Warning, TEXT("UInventoryComponent::SetAdditionalWeaponInfo - Not found weapon with index - %d"), WeaponIndex);
+		}
 	}
 
 	else
+	{
 		UE_LOG(LogTemp, Warning, TEXT("UInventoryComponent::SetAdditionalWeaponInfo - Not correct Weapon Index -%d"), WeaponIndex);
+	}
 }
 
 void UInventoryComponent::AmmoSlotChangeValue(EWeaponType TypeWeapon, int32 TakenAmmo)
@@ -322,7 +348,9 @@ void UInventoryComponent::AmmoSlotChangeValue(EWeaponType TypeWeapon, int32 Take
 			AmmoSlots[i].count += TakenAmmo;
 
 			if (AmmoSlots[i].count > AmmoSlots[i].MaxCount)
+			{
 				AmmoSlots[i].count = AmmoSlots[i].MaxCount;
+			}
 
 			AmmoChangeEvent_Multicast(AmmoSlots[i].WeaponType, AmmoSlots[i].count, TakenAmmo > 0);
 			bIsFound = true;	
@@ -338,7 +366,9 @@ bool UInventoryComponent::CheckCanTakeAmmo(EWeaponType AmmoType)
 	while (i < AmmoSlots.Num() && !result)
 	{
 		if (AmmoSlots[i].WeaponType == AmmoType && AmmoSlots[i].count < AmmoSlots[i].MaxCount)
+		{
 			result = true;
+		}
 		i++;
 	}
 	return result;
@@ -392,7 +422,9 @@ void UInventoryComponent::DropWeaponByIndex_OnServer_Implementation(int32 index)
 		{
 			avialableWeaponNum++;
 			if (avialableWeaponNum > 1)
+			{
 				canBeDropped = true;
+			}
 		}
 		i++;
 	}
@@ -437,7 +469,9 @@ void UInventoryComponent::TryGetWeaponToInventory_OnServer_Implementation(
 	while (i < WeaponSlots.Num() && !WeaponIsInInventory)
 	{
 		if (WeaponSlots[i].NameItem == NewWeapon.NameItem)
+		{
 			WeaponIsInInventory = true;
+		}
 		i++;
 	}
 
@@ -447,7 +481,9 @@ void UInventoryComponent::TryGetWeaponToInventory_OnServer_Implementation(
 		UpdateWeaponSlotsEvent_Multicast(IndexSlot, NewWeapon);
 
 		if (pickUpActor)
+		{
 			pickUpActor->Destroy();
+		}
 
 		bCanTake = true;
 	}
@@ -492,8 +528,12 @@ void UInventoryComponent::InitInventory_OnServer_Implementation(const TArray<FWe
 	MaxSlotsWeapon = WeaponSlots.Num();
 
 	if (WeaponSlots.IsValidIndex(0))
+	{
 		if (!WeaponSlots[0].NameItem.IsNone())
+		{
 			SwitchWeaponEvent_OnServer(WeaponSlots[0].NameItem, WeaponSlots[0].AdditionalInfo, 0);
+		}
+	}
 }
 
 void UInventoryComponent::SwitchWeaponEvent_OnServer_Implementation(FName idWeaponName, 

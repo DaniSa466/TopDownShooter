@@ -28,9 +28,13 @@ void AProjectileDefault_Grenade::TimerExplose(float DeltaTime)
 	if (TimerEnabled)
 	{
 		if (TimerToExplose > TimeToExplose)
+		{
 			Explose_OnServer();
+		}
 		else
+		{
 			TimerToExplose += DeltaTime;
+		}
 	}
 }
 
@@ -44,7 +48,9 @@ void AProjectileDefault_Grenade::BulletCollisionSphereHit(UPrimitiveComponent* H
 void AProjectileDefault_Grenade::ImpactProjectile()
 {
 	if (!TimerEnabled)
+	{
 		TimerEnabled = true;
+	}
 }
 
 void AProjectileDefault_Grenade::Explose_OnServer_Implementation()
@@ -81,11 +87,16 @@ void AProjectileDefault_Grenade::ExploseVisual_Multicast_Implementation(float mi
 	}
 
 	if (explosionFX)
+	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), explosionFX,
 			GetActorLocation(), GetActorRotation(), FVector(1.f));
+	}
+
 	if (explosionSound)
+	{
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), explosionSound,
 			GetActorLocation());
+	}
 }
 
 void AProjectileDefault_Grenade::DestroyGrenade_Multicast_Implementation()

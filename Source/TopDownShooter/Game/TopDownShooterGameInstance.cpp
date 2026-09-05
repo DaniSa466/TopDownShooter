@@ -71,7 +71,9 @@ bool UTopDownShooterGameInstance::GetDropItemInfoByName(FName NameItem, FDropIte
         }
     }
     else
+    {
         UE_LOG(LogTemp, Warning, TEXT("UGameInstance::GetDropItemInfoByName - DropItemInfoTable - NULL"));
+    }
 
     return bIsFound;
 }

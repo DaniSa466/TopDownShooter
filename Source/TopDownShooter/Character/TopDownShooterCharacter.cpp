@@ -58,10 +58,14 @@ ATopDownShooterCharacter::ATopDownShooterCharacter()
 	HealthComponent = CreateDefaultSubobject<UTPS_CharHealthComponent>(TEXT("HealthComponent"));
 
 	if (InventoryComponent)
+	{
 		InventoryComponent->OnSwitchWeapon.AddDynamic(this, &ATopDownShooterCharacter::InitWeapon);
+	}
 
 	if (HealthComponent)
+	{
 		HealthComponent->OnDead.AddDynamic(this, &ATopDownShooterCharacter::CharDead);
+	}
 
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
@@ -178,7 +182,9 @@ void ATopDownShooterCharacter::InputAxisY(float Value)
 void ATopDownShooterCharacter::InputAttackPressed()
 {
 	if (HealthComponent && HealthComponent->GetIsAlive())
+	{
 		AttackCharEvent(true);
+	}
 }
 
 void ATopDownShooterCharacter::InputAttackReleased()
@@ -189,7 +195,9 @@ void ATopDownShooterCharacter::InputAttackReleased()
 void ATopDownShooterCharacter::TryReloadWeapon()
 {
 	if (HealthComponent && HealthComponent->GetIsAlive() && CurrentWeapon && !CurrentWeapon->WeaponReloading)
+	{
 		TryReloadWeapon_OnServer();
+	}
 }
 
 void ATopDownShooterCharacter::AttackCharEvent(bool bIsFiring)
@@ -197,10 +205,14 @@ void ATopDownShooterCharacter::AttackCharEvent(bool bIsFiring)
 	AWeaponDefault* myWeapon = nullptr;
 	myWeapon = GetCurrentWeapon();
 	if (myWeapon)
+	{
 		myWeapon->SetWeaponStateFire_OnServer(bIsFiring);
+	}
 
 	else
+	{
 		UE_LOG(LogTemp, Warning, TEXT("ATopDownShooterCharacter::AttackCharEvent - CurrentWeapon - NULL"));
+	}
 }
 
 void ATopDownShooterCharacter::MovementTick(float DeltaTime)
@@ -256,14 +268,16 @@ void ATopDownShooterCharacter::MovementTick(float DeltaTime)
 
 					bool bIsReducingDispersion;
 					if (FMath::IsNearlyZero(GetVelocity().Size(), 0.5f))
+					{
 						bIsReducingDispersion = true;
-						//CurrentWeapon->ShouldReduceDispersion = true; del
+					}
+
 					else
+					{
 						bIsReducingDispersion = false;
-						//CurrentWeapon->ShouldReduceDispersion = false; del
+					}
 					
 					CurrentWeapon->UpdateWeaponByCharacterMovementState_OnServer(ResultHit.Location + Displacement, bIsReducingDispersion);
-					//CurrentWeapon->ShootEndLocation = ResultHit.Location + Displacement; del
 				}
 			}
 		}
@@ -303,7 +317,9 @@ void ATopDownShooterCharacter::ChangeMovementState()
 	if (AxisX != 0 || AxisY != 0)
 	{
 		if (!WalkEnabled && !SprintRunEnabled && !AimEnabled)
+		{
 			newState = EMovementState::Run_State;
+		}
 
 		else
 		{
@@ -316,19 +332,27 @@ void ATopDownShooterCharacter::ChangeMovementState()
 					newState = EMovementState::SprintRun_State;
 				}
 				else
+				{
 					SprintRunEnabled = false;
+				}
 			}	
 
 			else if (WalkEnabled && !SprintRunEnabled && AimEnabled)
+			{
 				newState = EMovementState::AimWalk_State;
+			}
 
 			else
 			{
 				if (WalkEnabled && !SprintRunEnabled && !AimEnabled)
+				{
 					newState = EMovementState::Walk_State;
+				}
 
 				else
+				{
 					newState = EMovementState::Aim_State;
+				}
 			}
 		}
 	}
@@ -336,9 +360,13 @@ void ATopDownShooterCharacter::ChangeMovementState()
 	else
 	{
 		if (AimEnabled)
+		{
 			newState = EMovementState::AimStand_State;
+		}
 		else
+		{
 			newState = EMovementState::Stand_State;
+		}
 	}
 
 	SetMovementState_OnServer(newState);
@@ -346,7 +374,9 @@ void ATopDownShooterCharacter::ChangeMovementState()
 	//Weapon state update
 	AWeaponDefault* myWeapon = GetCurrentWeapon();
 	if (myWeapon)
+	{
 		myWeapon->UpdateStateWeapon_OnServer(newState);
+	}
 }
 
 //Function which controls character's stamina and doesn't let him Sprint for a long time
@@ -367,7 +397,10 @@ void ATopDownShooterCharacter::StaminaSystem(EMovementState State)
 	else
 	{
 		// system which doesn't let characters stamina increase forever
-		if (Stamina < MaxStamina) Stamina += 1;
+		if (Stamina < MaxStamina) 
+		{
+			Stamina += 1;
+		}
 	}
 }
 
@@ -415,7 +448,9 @@ int32 ATopDownShooterCharacter::GetCurrentWeaponIndex()
 bool ATopDownShooterCharacter::GetIsAlive()
 {
 	if (HealthComponent && HealthComponent->GetIsAlive())
+	{
 		return HealthComponent->GetIsAlive();
+	}
 
 	return false;
 }
@@ -468,10 +503,14 @@ void ATopDownShooterCharacter::InitWeapon(FName IdWeaponName, FAdditionalWeaponI
 
 					//try reload weapon after switching if it's possible and needed
 					if (CurrentWeapon->GetWeaponRound() <= 0)
+					{
 						CurrentWeapon->InitReload();
+					}
 
 					if (InventoryComponent)
+					{
 						InventoryComponent->AmmoAvialableEvent_Multicast(MyWeapon->WeaponSettings.WeaponType);
+					}
 				}
 			}
 		}
@@ -548,7 +587,9 @@ void ATopDownShooterCharacter::DisableFireBulletsEffect()
 void ATopDownShooterCharacter::WeaponFire(UAnimMontage* Anim)
 {
 	if (InventoryComponent && CurrentWeapon)
+	{
 		InventoryComponent->SetAdditionalWeaponInfo(CurrentIndexWeapon, CurrentWeapon->AdditionalWeaponInfo);
+	}
 
 	WeaponFire_BP(Anim);
 }
@@ -631,7 +672,9 @@ EPhysicalSurface ATopDownShooterCharacter::GetSurfaceType()
 	EPhysicalSurface result = EPhysicalSurface::SurfaceType_Default;
 
 	if (HealthComponent)
+	{
 		if (HealthComponent->GetShieldStrenght() <= 0)
+		{
 			if (GetMesh())
 			{
 				UMaterialInterface* myMaterial = GetMesh()->GetMaterial(0);
@@ -639,6 +682,8 @@ EPhysicalSurface ATopDownShooterCharacter::GetSurfaceType()
 				if (myMaterial)
 					result = myMaterial->GetPhysicalMaterial()->SurfaceType;
 			}
+		}
+	}
 
 	return result;
 }
@@ -668,20 +713,26 @@ void ATopDownShooterCharacter::AddEffect(UTPS_StatsEffects* EffectToAdd)
 	else
 	{
 		if (EffectToAdd->ParticleEffect)
+		{
 			ExecuteEffectAdd_OnServer(EffectToAdd->ParticleEffect);
+		}
 	}
 }
 
 void ATopDownShooterCharacter::OnRep_EffectToAdd()
 {
 	if (effectToAdd)
+	{
 		SwitchEffect(effectToAdd, true);
+	}
 }
 
 void ATopDownShooterCharacter::OnRep_EffectToRemove()
 {
 	if (effectToRemove)
+	{
 		SwitchEffect(effectToRemove, false);
+	}
 }
 
 void ATopDownShooterCharacter::ExecuteEffectAdd_OnServer_Implementation(UParticleSystem* effectFX)
@@ -752,25 +803,33 @@ void ATopDownShooterCharacter::CharDead()
 		}
 
 		if (GetController())
+		{
 			GetController()->UnPossess();
+		}
 
 		GetWorldTimerManager().SetTimer(RagDollTimer, this, &ATopDownShooterCharacter::EnableRagDoll_Multicast, AnimTime, false);
 
 		SetLifeSpan(20.f);
 		if (CurrentWeapon)
+		{
 			CurrentWeapon->SetLifeSpan(10.f);
+		}
 	}
 
 	else
 	{
 		if (GetCursorToWorld())
+		{
 			GetCursorToWorld()->SetVisibility(false);
+		}
 
 		AttackCharEvent(false);
 	}
 
 	if (GetCapsuleComponent())
+	{
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	}
 }
 
 void ATopDownShooterCharacter::EnableRagDoll_Multicast_Implementation()
@@ -791,7 +850,9 @@ float ATopDownShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent cons
 	if (HealthComponent && HealthComponent->GetIsAlive())
 	{
 		if (!HealthComponent->GetResistToDamage())
+		{
 			HealthComponent->ChangeCurrentHealth_OnServer(-DamageAmount);
+		}
 	}
 
 	if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID))
@@ -837,13 +898,17 @@ void ATopDownShooterCharacter::SetMovementState_Multicast_Implementation(EMoveme
 void ATopDownShooterCharacter::TryReloadWeapon_OnServer_Implementation()
 {
 	if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSettings.MaxRound)
+	{
 		CurrentWeapon->InitReload();
+	}
 }
 
 void ATopDownShooterCharacter::PlayAnim_Multicast_Implementation(UAnimMontage* anim)
 {
 	if (GetMesh() && GetMesh()->GetAnimInstance())
+	{
 		GetMesh()->GetAnimInstance()->Montage_Play(anim);
+	}
 }
 
 bool ATopDownShooterCharacter::ReplicateSubobjects(UActorChannel* Channel,
@@ -854,7 +919,9 @@ bool ATopDownShooterCharacter::ReplicateSubobjects(UActorChannel* Channel,
 	for (int32 i = 0; i < Effects.Num(); i++)
 	{
 		if (Effects[i])
+		{
 			wrote |= Channel->ReplicateSubobject(Effects[i], *Bunch, *RepFlags);
+		}
 	}
 
 	return wrote;

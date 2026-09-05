@@ -14,6 +14,3 @@ class ATopDownShooterGameMode : public AGameModeBase
 public:
 	ATopDownShooterGameMode();
 };
-
-
-
