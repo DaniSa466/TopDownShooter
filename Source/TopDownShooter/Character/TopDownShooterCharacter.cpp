@@ -544,46 +544,6 @@ void ATopDownShooterCharacter::DropCurrentWeapon()
 	}
 }
 
-void ATopDownShooterCharacter::EnableFireBulletsEffect()
-{
-	if (GetWorld())
-	{
-		if (burnEffect)
-		{
-			if (isFireBulletEffect)
-			{
-				GetWorld()->GetTimerManager().ClearTimer(fireBulletsEffectTimerHandle);
-			}
-			else
-			{
-				isFireBulletEffect = true;
-				if (CurrentWeapon)
-				{
-					CurrentWeapon->WeaponSettings.ProjectileSetting.Effect = burnEffect;
-					OnFireBulletsEffectEnable.Broadcast(CurrentIndexWeapon);
-				}
-			}
-			GetWorld()->GetTimerManager().SetTimer(fireBulletsEffectTimerHandle, this, 
-				&ATopDownShooterCharacter::DisableFireBulletsEffect, 5.f, false);
-		}
-	}
-}
-
-void ATopDownShooterCharacter::DisableFireBulletsEffect()
-{
-	if (GetWorld())
-	{
-		isFireBulletEffect = false;
-
-		if (CurrentWeapon)
-		{
-			CurrentWeapon->WeaponSettings.ProjectileSetting.Effect = nullptr;
-			OnFireBulletsEffectDisable.Broadcast();
-			GetWorld()->GetTimerManager().ClearTimer(fireBulletsEffectTimerHandle);
-		}
-	}
-}
-
 void ATopDownShooterCharacter::WeaponFire(UAnimMontage* Anim)
 {
 	if (InventoryComponent && CurrentWeapon)
@@ -877,6 +837,117 @@ void ATopDownShooterCharacter::SetActorRotationByYaw_Multicast_Implementation(fl
 {
 	//if (Controller && !Controller->IsLocalPlayerController())
 	SetActorRotation(FQuat(FRotator(0.0f, yaw, 0.0f)));
+}
+
+void ATopDownShooterCharacter::ChangeCharacterInputStatus_Multicast_Implementation(bool isStun, 
+	UAnimMontage* loopAnimation, UParticleSystem* ParticleEffect, UParticleSystemComponent* ParticleEmitter)
+{
+	if (isStun)
+	{
+		stunAnimation = loopAnimation;
+		stunEffect = ParticleEffect;
+		stunEmitter = ParticleEmitter;
+
+		if (stunAnimation)
+		{
+			PlayAnim_Multicast(stunAnimation);
+		}
+
+		ResSpeed = 0;
+		if (!GetController())
+			return;
+
+		DisableInput(Cast<APlayerController>(GetController()));
+
+		USkeletalMeshComponent* characterMesh = GetMesh();
+		if (stunEffect && characterMesh)
+		{
+			FName BoneNameToAttachEffect = "head";
+
+			if (!characterMesh->DoesSocketExist(BoneNameToAttachEffect))
+			{
+				UE_LOG(LogTemp, Warning, TEXT("UTPS_EffectsToHealth::ChangeHealthCoef - Bone not found, attaching to root component"));
+				stunEmitter = UGameplayStatics::SpawnEmitterAttached(stunEffect,
+					characterMesh, NAME_None, FVector::ZeroVector, FRotator::ZeroRotator,
+					EAttachLocation::SnapToTarget, false);
+			}
+			else
+			{
+				stunEmitter = UGameplayStatics::SpawnEmitterAttached(stunEffect,
+					characterMesh, BoneNameToAttachEffect, FVector::ZeroVector,
+					FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
+			}
+		}
+	}
+	else
+	{
+		if (GetController())
+		{
+			EnableInput(Cast<APlayerController>(GetController()));
+			ChangeMovementState();
+		}
+
+		if (stunEmitter)
+		{
+			stunEmitter->DestroyComponent();
+		}
+
+		stunAnimation = nullptr;
+		stunEffect = nullptr;
+		stunEmitter = nullptr;
+	}
+}
+
+void ATopDownShooterCharacter::EnableFireBulletsEffect_OnServer_Implementation()
+{
+	if (GetWorld())
+	{
+		if (burnEffect)
+		{
+			if (isFireBulletEffect)
+			{
+				GetWorld()->GetTimerManager().ClearTimer(fireBulletsEffectTimerHandle);
+			}
+			else
+			{
+				isFireBulletEffect = true;
+
+				if (CurrentWeapon)
+				{
+					CurrentWeapon->WeaponSettings.ProjectileSetting.Effect = burnEffect;
+					EnableFireBulletsEffect_OnClient(CurrentIndexWeapon);
+				}
+			}
+			GetWorld()->GetTimerManager().SetTimer(fireBulletsEffectTimerHandle, this,
+				&ATopDownShooterCharacter::DisableFireBulletsEffect_OnServer, 15.f, false);
+		}
+	}
+}
+
+void ATopDownShooterCharacter::DisableFireBulletsEffect_OnServer_Implementation()
+{
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(fireBulletsEffectTimerHandle);
+
+		isFireBulletEffect = false;
+
+		if (CurrentWeapon)
+		{
+			CurrentWeapon->WeaponSettings.ProjectileSetting.Effect = nullptr;
+			DisableFireBulletsEffect_OnClient();
+		}
+	}
+}
+
+void ATopDownShooterCharacter::EnableFireBulletsEffect_OnClient_Implementation(int32 fireBulletsWeaponIndex)
+{
+	OnFireBulletsEffectEnable.Broadcast(fireBulletsWeaponIndex);
+}
+
+void ATopDownShooterCharacter::DisableFireBulletsEffect_OnClient_Implementation()
+{
+	OnFireBulletsEffectDisable.Broadcast();
 }
 
 void ATopDownShooterCharacter::SetMovementState_OnServer_Implementation(EMovementState newState)

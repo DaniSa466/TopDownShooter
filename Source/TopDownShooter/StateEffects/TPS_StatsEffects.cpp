@@ -272,7 +272,8 @@ bool UTPS_StunEffect::InitObject(AActor* ActorToStun, FName hitBoneName)
 		return false;
 	}
 
-	ChangeCharacterInputStatus(true);
+	//ChangeCharacterInputStatus(true);
+	pointerToCharacter->ChangeCharacterInputStatus_Multicast(true, loopAnimation, ParticleEffect, ParticleEmitter);
 
 	if (GetWorld())
 	{
@@ -285,7 +286,7 @@ bool UTPS_StunEffect::InitObject(AActor* ActorToStun, FName hitBoneName)
 
 void UTPS_StunEffect::DestroyObject()
 {
-	ChangeCharacterInputStatus(false);
+	pointerToCharacter->ChangeCharacterInputStatus_Multicast(false, loopAnimation, ParticleEffect, ParticleEmitter);
 	
 	if (ParticleEmitter)
 	{
@@ -294,43 +295,4 @@ void UTPS_StunEffect::DestroyObject()
 	}
 
 	Super::DestroyObject();
-}
-
-void UTPS_StunEffect::ChangeCharacterInputStatus(bool isStun)
-{
-	if (isStun)
-	{
-		if (loopAnimation)
-		{
-			pointerToCharacter->PlayAnimMontage(loopAnimation);
-		}
-
-		pointerToCharacter->ResSpeed = 0;
-		pointerToCharacter->DisableInput(Cast<APlayerController>(pointerToCharacter->GetController()));
-
-		USkeletalMeshComponent* characterMesh = pointerToCharacter->GetMesh();
-		if (ParticleEffect && characterMesh)
-		{
-			FName BoneNameToAttachEffect = "head";
-
-			if (!characterMesh->DoesSocketExist(BoneNameToAttachEffect))
-			{
-				UE_LOG(LogTemp, Warning, TEXT("UTPS_EffectsToHealth::ChangeHealthCoef - Bone not found, attaching to root component"));
-				ParticleEmitter = UGameplayStatics::SpawnEmitterAttached(ParticleEffect,
-					characterMesh, NAME_None, FVector::ZeroVector, FRotator::ZeroRotator,
-					EAttachLocation::SnapToTarget, false);
-			}
-			else
-			{
-				ParticleEmitter = UGameplayStatics::SpawnEmitterAttached(ParticleEffect,
-					characterMesh, BoneNameToAttachEffect, FVector::ZeroVector,
-					FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false);
-			}
-		}
-	}
-	else
-	{
-		pointerToCharacter->EnableInput(Cast<APlayerController>(pointerToCharacter->GetController()));
-		pointerToCharacter->ChangeMovementState();
-	}
 }

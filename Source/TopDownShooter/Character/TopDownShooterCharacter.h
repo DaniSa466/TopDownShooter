@@ -125,6 +125,11 @@ private:
 	bool isFireBulletEffect = false;
 	FTimerHandle fireBulletsEffectTimerHandle;
 
+	// stun
+	UAnimMontage* stunAnimation = nullptr;
+	UParticleSystem* stunEffect = nullptr;
+	UParticleSystemComponent* stunEmitter = nullptr;
+
 public:
 	//delegates
 	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite)
@@ -228,11 +233,6 @@ public:
 	void TrySwitchWeaponToIndexByKeyInput_OnServer(int32 index);
 	void DropCurrentWeapon();
 
-	UFUNCTION(BlueprintCallable)
-	void EnableFireBulletsEffect();
-	UFUNCTION(BlueprintCallable)
-	void DisableFireBulletsEffect();
-
 	UFUNCTION()
 	void WeaponFire(UAnimMontage* Anim);
 
@@ -278,6 +278,21 @@ public:
 	void SetActorRotationByYaw_OnServer(float yaw);
 	UFUNCTION(NetMulticast, Unreliable)
 	void SetActorRotationByYaw_Multicast(float yaw);
+
+	// effects
+	UFUNCTION(NetMulticast, Reliable)
+	void ChangeCharacterInputStatus_Multicast(bool isStun, UAnimMontage* loopAnimation, 
+		UParticleSystem* ParticleEffect, UParticleSystemComponent* ParticleEmitter);
+
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void EnableFireBulletsEffect_OnServer();
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void DisableFireBulletsEffect_OnServer();
+
+	UFUNCTION(Client, Unreliable)
+	void EnableFireBulletsEffect_OnClient(int32 fireBulletsWeaponIndex);
+	UFUNCTION(Client, Unreliable)
+	void DisableFireBulletsEffect_OnClient();
 
 	UFUNCTION(Server, Reliable)
 	void SetMovementState_OnServer(EMovementState newState);

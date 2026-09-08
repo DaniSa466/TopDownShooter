@@ -141,5 +141,4 @@ protected:
 public:
 	bool InitObject(AActor* ActorToStun, FName hitBoneName) override;
 	void DestroyObject() override;
-	void ChangeCharacterInputStatus(bool isStun);
 };

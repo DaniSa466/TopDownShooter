@@ -105,7 +105,6 @@ bool UInventoryComponent::SwitchWeaponToNextOrPrevious(int8 OldIndex, FAdditiona
 				{
 					SwitchIsSuccess = true;
 				}
-			}
 				else
 				{
 					FWeaponInfo InfoToType;
@@ -130,6 +129,7 @@ bool UInventoryComponent::SwitchWeaponToNextOrPrevious(int8 OldIndex, FAdditiona
 						}
 					}
 				}
+			}
 			i++;
 		}
 	}
