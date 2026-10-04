@@ -998,6 +998,12 @@ bool ATopDownShooterCharacter::ReplicateSubobjects(UActorChannel* Channel,
 	return wrote;
 }
 
+void ATopDownShooterCharacter::PlaySoundAtached_Multicast_Implementation(USoundBase* soundToPlay)
+{
+	if (soundToPlay)
+		UGameplayStatics::SpawnSoundAttached(soundToPlay, GetCapsuleComponent());
+}
+
 void ATopDownShooterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

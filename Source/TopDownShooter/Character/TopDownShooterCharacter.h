@@ -303,5 +303,8 @@ public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void PlayAnim_Multicast(UAnimMontage* anim);
 
+	UFUNCTION(Client, Unreliable)
+	void PlaySoundAtached_Multicast(USoundBase* soundToPlay);
+
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

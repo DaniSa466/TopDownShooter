@@ -66,6 +66,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SheildSounds")
 	USoundBase* ShieldIsRecoveredSound = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerSounds")
+	TArray<USoundBase*> hitReactionSounds;
+
 	void ChangeCurrentHealth_OnServer(float ChangeValue) override;
 	void ChangeShieldStrenght(float ChangeValue);
 

@@ -6,6 +6,8 @@
 #include "GameFramework/PlayerController.h"
 #include "TopDownShooterPlayerController.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAllEnemiesAreDefeated);
+
 UCLASS()
 class ATopDownShooterPlayerController : public APlayerController
 {
@@ -13,6 +15,9 @@ class ATopDownShooterPlayerController : public APlayerController
 
 public:
 	ATopDownShooterPlayerController();
+
+	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite)
+	FOnAllEnemiesAreDefeated OnAllEnemiesAreDefeated;
 
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */

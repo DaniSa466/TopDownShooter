@@ -11,13 +11,15 @@ void UTPS_CharHealthComponent::ChangeCurrentHealth_OnServer(float ChangeValue)
 {
 	float DamageOnShield = ChangeValue * DamageCoef;
 
+	ATopDownShooterCharacter* character = nullptr;
+
 	if (ChangeValue < 0.f)
 	{
 		bool isStun = FMath::FRand() < stunChance;
 
 		if (isStun)
 		{
-			ATopDownShooterCharacter* character = Cast<ATopDownShooterCharacter>(GetOwner());
+			character = Cast<ATopDownShooterCharacter>(GetOwner());
 			if (character && stunEffect)
 			{
 				UTypes::AddEffectBySurfaceType(character, NAME_None, stunEffect, EPhysicalSurface::SurfaceType3);
@@ -33,6 +35,29 @@ void UTPS_CharHealthComponent::ChangeCurrentHealth_OnServer(float ChangeValue)
 	else
 	{
 		Super::ChangeCurrentHealth_OnServer(ChangeValue);
+
+		if (ChangeValue < 0.0f)
+		{
+			uint8 hitReactionSoundIndex = FMath::RandHelper(hitReactionSounds.Num());
+			if (FMath::RandBool())
+			{
+				/*
+				first checking to valid of character reference in this code block is done for some kind of optimization.
+				it's smth like "if chasracter was stunned, so this reference is valid and programm doesn't have to
+				make one more cast. but probability that this reference is invelid is much bigger because of stun chance,
+				so i have to add one more cast in that case. why i didn't just make a cast in the begining of this function?
+				because there are a 0.9 * 0.5 chance that cast is unnececery ( if character is not stunned by hit and doesn't
+				play hit reaction sound). so in 45% of hit to character this method doesn't need this cast.
+				and the second checking to valid is a main logic. if that ref is ok, so play sound.
+				*/
+
+				if (!character)
+					character = Cast<ATopDownShooterCharacter>(GetOwner());
+
+				if (character)
+					character->PlaySoundAtached_Multicast(hitReactionSounds[hitReactionSoundIndex]);
+			}
+		}
 	}
 }
 
