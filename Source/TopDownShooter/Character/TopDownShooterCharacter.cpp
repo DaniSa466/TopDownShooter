@@ -857,6 +857,10 @@ void ATopDownShooterCharacter::ChangeCharacterInputStatus_Multicast_Implementati
 		if (!GetController())
 			return;
 
+		AxisX = 0.f;
+		AxisY = 0.f;
+		AttackCharEvent(false);
+
 		DisableInput(Cast<APlayerController>(GetController()));
 
 		USkeletalMeshComponent* characterMesh = GetMesh();
