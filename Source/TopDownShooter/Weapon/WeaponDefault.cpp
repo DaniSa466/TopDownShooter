@@ -312,12 +312,21 @@ void AWeaponDefault::Fire()
 						callInitTraceMulticast = true;
 					}
 
+					UE_LOG(LogTemp, Warning, TEXT("SpawnLocation: %s, EndLocation: %s"), *SpawnLocation.ToString(), *EndLocation.ToString());
 					InitTrace_OnServer(SpawnLocation, EndLocation, callInitTraceMulticast);
 				}
 			}
 		}
 	}
-	else
+	//else
+	//{
+	//	if (!WeaponReloading && CheckWeaponCanBeReloaded())
+	//	{
+	//		InitReload();
+	//	}
+	//}
+
+	if (GetWeaponRound() == 0)
 	{
 		if (!WeaponReloading && CheckWeaponCanBeReloaded())
 		{
@@ -720,14 +729,15 @@ void AWeaponDefault::InitTrace_OnServer_Implementation(FVector spawnLocation, FV
 	FHitResult hit;
 	TArray<AActor*> actors;
 	const FProjectileInfo& projectileInfo = GetProjectile();
-	endLocation *= WeaponSettings.DistanceTrace;
+	//endLocation *= WeaponSettings.DistanceTrace;
 
 	UKismetSystemLibrary::LineTraceSingle(GetWorld(), spawnLocation,
 		endLocation, ETraceTypeQuery::TraceTypeQuery4,
 		false, actors, EDrawDebugTrace::ForDuration, hit, true, FLinearColor::Red,
-		FLinearColor::Green, 0.f);
+		FLinearColor::Green, 3.f);
 
 	tracesEndLoc.Add(hit.Location);
+	UE_LOG(LogTemp, Warning, TEXT("SERVER. SpawnLocation: %s, EndLocation: %s"), *spawnLocation.ToString(), *endLocation.ToString());
 
 	if (ShowDebug)
 	{
@@ -811,6 +821,8 @@ void AWeaponDefault::InitTrace_Multicast_Implementation(FVector_NetQuantize spaw
 			endLocations[i], ETraceTypeQuery::TraceTypeQuery4,
 			false, actors, EDrawDebugTrace::ForDuration, hit, true, FLinearColor::Red,
 			FLinearColor::Green, 5.f);
+
+		UE_LOG(LogTemp, Warning, TEXT("CLIENT. SpawnLocation: %s, EndLocation: %s"), *spawnLocation.ToString(), *endLocations[i].ToString());
 	}
 }
 
